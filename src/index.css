@@ -10,7 +10,7 @@
   }
 
   .glass-morphism-strong {
-    background: rgba(255, 255, 255, 0.348);
+    background: rgba(255, 255, 255, 0.019);
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
     border: 1px solid rgba(255, 255, 255, 0.3);
@@ -18,7 +18,7 @@
   }
 
   .glass-morphism-subtle {
-    background: rgba(255, 255, 255, 0.195);
+    background: rgba(255, 255, 255, 0.43);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     border: 1px solid rgba(255, 255, 255, 0.1);

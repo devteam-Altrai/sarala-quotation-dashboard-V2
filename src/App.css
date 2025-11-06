@@ -1,13 +1,30 @@
 .custom-gradient {
   background: linear-gradient(
-    40deg,
-    #0e9dc7 5%,
-
-    #90d1f4 20%,
-
+    25deg,
+    #63c1f3 0%,
+    #63c1f3 25%,
+    #90d2f4 26%,
+    #90d2f4 75%,
+    #c9e7f6 76.5%,
     #c9e7f6 100%
   );
 }
 /* .custom-gradient {
   background: linear-gradient(20deg, #89f7fe 0%, #66a6ff 100%);
 } */
+
+.files-border-gradient {
+  position: relative;
+  padding-right: 6px; /* space for the right border */
+  height: 100%;
+}
+
+.files-border-gradient::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0; /* position on right side */
+  width: 2px;
+  height: 100%;
+  background: linear-gradient(180deg, #ffffff 15%, #b1b1b1 50%, #ffffff 90%);
+}

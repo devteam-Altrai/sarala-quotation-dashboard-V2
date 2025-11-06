@@ -22,12 +22,12 @@ const Menu_Items = [
     url: "/pricelist",
     icon: price,
   },
-  {
-    key: "Fileviewer",
-    label: "FILE VIEWER",
-    url: "/fileviewer",
-    icon: view,
-  },
+  // {
+  //   key: "Fileviewer",
+  //   label: "FILE VIEWER",
+  //   url: "/fileviewer",
+  //   icon: view,
+  // },
 ];
 
 export { Menu_Items };

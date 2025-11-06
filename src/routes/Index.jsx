@@ -6,7 +6,7 @@ import Settings from "../pages/Settings";
 import ShowCase from "../pages/ShowCase";
 import ReviewTable from "../pages/ReviewTable";
 import Viewer from "../pages/Viewer";
-import File from "../pages/File";
+
 const landerpageRoutes = {
   path: "/",
   name: "root",
@@ -39,13 +39,13 @@ const pricelistRoutes = {
   element: <PriceList />,
   route: Route,
 };
-const showcaseRoutes = {
-  path: "/fileviewer",
-  name: "File viewer",
-  element: <ShowCase />,
-  route: Route,
-  displaySidebar: false,
-};
+// const showcaseRoutes = {
+//   path: "/fileviewer",
+//   name: "File viewer",
+//   element: <ShowCase />,
+//   route: Route,
+//   displaySidebar: false,
+// };
 const settings = {
   path: "/settings",
   name: "Settings",
@@ -78,7 +78,7 @@ const authProtectedRoutes = listedRoutes([
   filesRoutes,
   viewerRoutes,
   pricelistRoutes,
-  showcaseRoutes,
+  // showcaseRoutes,
   settings,
   reviewFiles,
 ]);
@@ -93,7 +93,7 @@ export {
   filesRoutes,
   viewerRoutes,
   pricelistRoutes,
-  showcaseRoutes,
+  // showcaseRoutes,
   settings,
   reviewFiles,
 };

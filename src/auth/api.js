@@ -1,9 +1,9 @@
 import axios from "axios";
-import { BASE_URL } from "../utils/AppConstant";
+import { AUTH_URL } from "../utils/AppConstant";
 
 // Create axios instance
 const api = axios.create({
-  baseURL: BASE_URL,
+  baseURL: AUTH_URL,
 });
 
 // Attach token to each request if available

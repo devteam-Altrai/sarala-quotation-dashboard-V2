@@ -10,8 +10,8 @@ const Layout = ({ children }) => {
       </div>
 
       {/* Main container grows to fill space and scrolls inside */}
-      <div className="flex-1 overflow-hidden border border-white/50 shadow-xl backdrop-blur-xl rounded-xl">
-        <main className="h-full w-full rounded-lg p-2.5">{children}</main>
+      <div className="flex-1 overflow-hidden border border-white/50 shadow-xl backdrop-blur-xl rounded-xl bg-white">
+        <main className="h-full w-full rounded-lg">{children}</main>
       </div>
     </div>
   );
