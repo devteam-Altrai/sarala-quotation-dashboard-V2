@@ -6,6 +6,7 @@ import Settings from "../pages/Settings";
 import ShowCase from "../pages/ShowCase";
 import ReviewTable from "../pages/ReviewTable";
 import Viewer from "../pages/Viewer";
+import File from "../pages/File";
 
 const landerpageRoutes = {
   path: "/",

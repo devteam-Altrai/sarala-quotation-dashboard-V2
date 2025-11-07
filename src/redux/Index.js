@@ -1,5 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit";
-import filesReducer from "./filesSlice";
+import filesReducer from "../redux/FilesSlice";
 
 export const store = configureStore({
   reducer: {
