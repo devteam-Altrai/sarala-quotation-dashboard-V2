@@ -200,7 +200,10 @@ const Dashboard = () => {
                     {/* Grand Total */}
                     <td className="px-6 py-4 whitespace-normal max-w-xs break-words">
                       <div className="text-[16px] font-medium">
-                        {file.grandTotal}
+                        {file.grandTotal !== undefined &&
+                        file.grandTotal !== null
+                          ? Number(file.grandTotal).toFixed(2)
+                          : ""}
                       </div>
                     </td>
                   </tr>
