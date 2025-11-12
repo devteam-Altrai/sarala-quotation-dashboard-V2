@@ -2,7 +2,7 @@
 import { Navigate, useNavigate } from "react-router-dom";
 import api from "../auth/api";
 import { useAuthContext } from "../auth/AuthContext";
-import { BASE_URL } from "../utils/AppConstant";
+import { AUTH_URL, BASE_URL } from "../utils/AppConstant";
 import bg from "../assets/bg.jpg";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -119,7 +119,7 @@ const LanderPage = () => {
       setFormSuccess("");
 
       // ✅ Send register request
-      await api.post(`${BASE_URL}register/`, {
+      await api.post(`${AUTH_URL}register/`, {
         username: trimmedName,
         password: trimmedPassword,
         email: trimmedEmail,
