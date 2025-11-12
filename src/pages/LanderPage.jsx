@@ -1,9 +1,9 @@
-﻿import React, { useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import api from "../auth/api";
 import { useAuthContext } from "../auth/AuthContext";
 import { AUTH_URL, BASE_URL } from "../utils/AppConstant";
-import bg from "../assets/bg.jpg";
+import bg from "../assets/icon.ico";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -151,29 +151,46 @@ const LanderPage = () => {
     }
   };
 
+  useEffect(() => {
+    if (formError) {
+      const timer = setTimeout(() => {
+        setFormError("");
+      }, 1700); // 3 seconds
+
+      return () => clearTimeout(timer);
+    }
+  }, [formError]);
+
   const formBaseClass =
     "absolute inset-0 w-full transition-all duration-500 ease-in-out transform";
 
   return (
-    <div
-      className="flex min-h-screen items-center justify-center bg-cover login-gradient bg-center bg-no-repeat px-4 py-12 bg-black/5"
-      // style={{ backgroundImage: `url(${bg})` }}
-    >
-      <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-1 shadow-xl">
-        <div className="rounded-[1.35rem] bg-white p-8">
+    <div className="flex min-h-screen w-full login-gradient items-center justify-center bg-cover bg-center bg-no-repeat bg-black/5 overflow-hidden">
+      <div className="w-[95%] sm:w-[90%] md:w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-1 shadow-xl">
+        <div className="flex justify-center mt-2">
+          <img
+            src={bg}
+            alt="Sarala Engineering"
+            className="h-12 w-auto md:h-14"
+          />
+        </div>
+
+        <div className="rounded-[1.35rem] bg-white md:pl-8 md:pr-8 md:pb-6 pl-3 pr-3 pb-2">
           {/* Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-semibold text-slate-900">
+          <div className="flex flex-col items-center gap-1">
+            <div className="flex flex-col items-center">
+              <h1 className="text-xl md:text-2xl font-semibold text-slate-900">
                 {isLogin ? "Welcome back" : "Create an account"}
               </h1>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-center text-slate-500">
                 {isLogin
                   ? "Sign in to continue to your Sarala Engineering workspace."
                   : "Register to access the Sarala Engineering platform."}
               </p>
             </div>
-            <div className="flex items-center gap-2 rounded-full bg-slate-100 p-1">
+
+            {/* Switch Buttons */}
+            <div className="flex items-center gap-2 mt-2 rounded-full bg-slate-100 p-1">
               <button
                 type="button"
                 onClick={() => switchMode("login")}
@@ -183,7 +200,7 @@ const LanderPage = () => {
                     : "text-slate-500 hover:text-slate-700"
                 }`}
               >
-                Login
+                LOGIN
               </button>
               <button
                 type="button"
@@ -194,13 +211,13 @@ const LanderPage = () => {
                     : "text-slate-500 hover:text-slate-700"
                 }`}
               >
-                Register
+                REGISTER
               </button>
             </div>
           </div>
 
           {/* Forms */}
-          <div className="relative mt-10 min-h-[360px]">
+          <div className="relative mt-2 md:mt-0 min-h-[360px]">
             {/* LOGIN FORM */}
             <form
               className={`${formBaseClass} ${
@@ -212,7 +229,7 @@ const LanderPage = () => {
               noValidate
             >
               <div className="space-y-1">
-                <label className="text-sm font-medium text-slate-700">
+                <label className="text-sm font-medium ml-2 text-slate-700">
                   Work email
                 </label>
                 <input
@@ -223,13 +240,13 @@ const LanderPage = () => {
                     if (formError) setFormError("");
                     setEmail(e.target.value);
                   }}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-[#0e9dc7] focus:bg-white focus:ring-4 focus:ring-[#0e9dc7]/20 outline-none transition"
+                  className="w-full rounded-xl border mt-0.5 border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-[#0e9dc7] focus:bg-white focus:ring-4 focus:ring-[#0e9dc7]/20 outline-none transition"
                   placeholder="you@example.com"
                 />
               </div>
 
               <div className="mt-6 space-y-1">
-                <label className="text-sm font-medium text-slate-700">
+                <label className="text-sm font-medium ml-2 text-slate-700">
                   Password
                 </label>
                 <input
@@ -240,18 +257,19 @@ const LanderPage = () => {
                     if (formError) setFormError("");
                     setPassword(e.target.value);
                   }}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-[#0e9dc7] focus:bg-white focus:ring-4 focus:ring-[#0e9dc7]/20 outline-none transition"
+                  className="w-full rounded-xl border mt-0.5 border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-[#0e9dc7] focus:bg-white focus:ring-4 focus:ring-[#0e9dc7]/20 outline-none transition"
                   placeholder="Enter your password"
                 />
               </div>
 
               {formError && isLogin && (
-                <div className="mt-6 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600">
+                <div className="fixed top-87 right-0 z-50 w-full rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-center text-sm text-rose-600 shadow-lg animate-slide-in">
                   {formError}
                 </div>
               )}
+
               {formSuccess && isLogin && !formError && (
-                <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                <div className="fixed top-87 right-0 z-50 w-full rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-center text-sm text-emerald-700 shadow-lg animate-slide-in">
                   {formSuccess}
                 </div>
               )}
@@ -275,8 +293,9 @@ const LanderPage = () => {
               onSubmit={handleRegister}
               noValidate
             >
+              {/* Register Fields */}
               <div className="space-y-1">
-                <label className="text-sm font-medium text-slate-700">
+                <label className="text-sm font-medium ml-2 text-slate-700">
                   Full name
                 </label>
                 <input
@@ -287,13 +306,13 @@ const LanderPage = () => {
                     if (formError) setFormError("");
                     setFullName(e.target.value);
                   }}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-[#0e9dc7] focus:bg-white focus:ring-4 focus:ring-[#0e9dc7]/20 outline-none transition"
-                  placeholder="Jane Doe"
+                  className="w-full rounded-xl border border-slate-200 mt-0.5 bg-slate-50 px-4 py-3 text-sm focus:border-[#0e9dc7] focus:bg-white focus:ring-4 focus:ring-[#0e9dc7]/20 outline-none transition"
+                  placeholder="Name"
                 />
               </div>
 
-              <div className="mt-6 space-y-1">
-                <label className="text-sm font-medium text-slate-700">
+              <div className="mt-3 space-y-1">
+                <label className="text-sm font-medium ml-2 text-slate-700">
                   Work email
                 </label>
                 <input
@@ -304,13 +323,13 @@ const LanderPage = () => {
                     if (formError) setFormError("");
                     setEmail(e.target.value);
                   }}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-[#0e9dc7] focus:bg-white focus:ring-4 focus:ring-[#0e9dc7]/20 outline-none transition"
+                  className="w-full rounded-xl border border-slate-200 mt-0.5 bg-slate-50 px-4 py-3 text-sm focus:border-[#0e9dc7] focus:bg-white focus:ring-4 focus:ring-[#0e9dc7]/20 outline-none transition"
                   placeholder="you@example.com"
                 />
               </div>
 
-              <div className="mt-6 space-y-1">
-                <label className="text-sm font-medium text-slate-700">
+              <div className="mt-3 space-y-1">
+                <label className="text-sm font-medium ml-2 text-slate-700">
                   Password
                 </label>
                 <input
@@ -321,13 +340,13 @@ const LanderPage = () => {
                     if (formError) setFormError("");
                     setPassword(e.target.value);
                   }}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-[#0e9dc7] focus:bg-white focus:ring-4 focus:ring-[#0e9dc7]/20 outline-none transition"
+                  className="w-full rounded-xl border border-slate-200 mt-0.5 bg-slate-50 px-4 py-3 text-sm focus:border-[#0e9dc7] focus:bg-white focus:ring-4 focus:ring-[#0e9dc7]/20 outline-none transition"
                   placeholder="Create a password"
                 />
               </div>
 
-              <div className="mt-6 space-y-1">
-                <label className="text-sm font-medium text-slate-700">
+              <div className="mt-3 space-y-1">
+                <label className="text-sm font-medium ml-2 text-slate-700">
                   Confirm password
                 </label>
                 <input
@@ -338,13 +357,13 @@ const LanderPage = () => {
                     if (formError) setFormError("");
                     setConfirmPassword(e.target.value);
                   }}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-[#0e9dc7] focus:bg-white focus:ring-4 focus:ring-[#0e9dc7]/20 outline-none transition"
+                  className="w-full rounded-xl border border-slate-200 mt-0.5 bg-slate-50 px-4 py-3 text-sm focus:border-[#0e9dc7] focus:bg-white focus:ring-4 focus:ring-[#0e9dc7]/20 outline-none transition"
                   placeholder="Re-enter your password"
                 />
               </div>
 
-              {formError && !isLogin && (
-                <div className="mt-6 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600">
+              {formError && (
+                <div className="fixed top-87 right-0 z-50 w-full rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-center text-sm text-rose-600 shadow-lg animate-slide-in">
                   {formError}
                 </div>
               )}
@@ -352,7 +371,7 @@ const LanderPage = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-[#0e9dc7] px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-[#0e9dc7]/40 transition hover:bg-[#0c86ab] focus:ring-4 focus:ring-[#0e9dc7]/40 disabled:opacity-70"
+                className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#0e9dc7] px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-[#0e9dc7]/40 transition hover:bg-[#0c86ab] focus:ring-4 focus:ring-[#0e9dc7]/40 disabled:opacity-70"
               >
                 {loading ? "Creating account..." : "Register"}
               </button>
@@ -360,18 +379,18 @@ const LanderPage = () => {
           </div>
 
           {/* Footer */}
-          <div className="mt-10 flex items-center justify-between text-xs text-slate-500">
+          <div className="mt-12 flex items-center justify-between text-xs text-slate-500">
             <span>
               {isLogin
-                ? "Need an account? Switch to register to get started."
-                : "Already have an account? Switch to login to access the app."}
+                ? "Sign Up? Switch to register to get started."
+                : "A User? Switch to login to access."}
             </span>
             <button
               type="button"
               onClick={() => switchMode(isLogin ? "register" : "login")}
               className="font-semibold text-[#0e9dc7] transition hover:text-[#0c86ab]"
             >
-              {isLogin ? "Register" : "Login"}
+              {isLogin ? "REGISTER" : "LOGIN"}
             </button>
           </div>
         </div>
