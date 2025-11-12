@@ -113,30 +113,36 @@ const LanderPage = () => {
       return;
     }
 
+    // ✅ Convert full name to valid username
+    const validUsername = trimmedName
+      .toLowerCase()
+      .replace(/\s+/g, "_") // replace spaces with underscore
+      .replace(/[^a-z0-9@.+-_]/gi, ""); // remove invalid chars
+
     try {
       setLoading(true);
       setFormError("");
       setFormSuccess("");
 
-      // ✅ Send register request
       await api.post(`${AUTH_URL}register/`, {
-        username: trimmedName,
-        password: trimmedPassword,
+        username: validUsername,
         email: trimmedEmail,
+        password: trimmedPassword,
       });
 
-      // ✅ Switch to login with success message
       switchMode("login", {
         force: true,
         successMessage: "Account created successfully. Sign in to continue.",
       });
     } catch (err) {
+      console.error("Register error:", err?.response?.data);
       const fallbackMessage =
         "We could not complete your registration. Please try again.";
       const apiMessage =
         err?.response?.data?.detail ||
         err?.response?.data?.message ||
         err?.response?.data?.error ||
+        JSON.stringify(err?.response?.data) ||
         fallbackMessage;
 
       setFormError(apiMessage);
@@ -150,8 +156,8 @@ const LanderPage = () => {
 
   return (
     <div
-      className="flex min-h-screen items-center justify-center bg-cover bg-center bg-no-repeat px-4 py-12 bg-black/5"
-      style={{ backgroundImage: `url(${bg})` }}
+      className="flex min-h-screen items-center justify-center bg-cover login-gradient bg-center bg-no-repeat px-4 py-12 bg-black/5"
+      // style={{ backgroundImage: `url(${bg})` }}
     >
       <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-1 shadow-xl">
         <div className="rounded-[1.35rem] bg-white p-8">

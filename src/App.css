@@ -9,6 +9,17 @@
     #c9e7f6 100%
   );
 }
+.login-gradient {
+  background: linear-gradient(
+    25deg,
+    #63c1f3 0%,
+    #63c1f3 22%,
+    #90d2f4 26.5%,
+    #90d2f4 75%,
+    #c9e7f6 79%,
+    #c9e7f6 100%
+  );
+}
 /* .custom-gradient {
   background: linear-gradient(20deg, #89f7fe 0%, #66a6ff 100%);
 } */
