@@ -44,7 +44,7 @@ const LanderPage = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    const trimmedEmail = email.trim();
+    const trimmedEmail = email.trim().toLowerCase();
     const trimmedPassword = password.trim();
 
     if (!trimmedEmail || !trimmedPassword) {
@@ -67,7 +67,12 @@ const LanderPage = () => {
         password: trimmedPassword,
       });
 
-      login(res.data.access, res.data.refresh);
+      login(
+        res.data.access,
+        res.data.refresh,
+        res.data.role,
+        res.data.username
+      );
       navigate("/dashboard");
     } catch (err) {
       const fallbackMessage =
@@ -89,7 +94,7 @@ const LanderPage = () => {
     e.preventDefault();
 
     const trimmedName = fullName.trim();
-    const trimmedEmail = email.trim();
+    const trimmedEmail = email.trim().toLowerCase();
     const trimmedPassword = password.trim();
     const trimmedConfirm = confirmPassword.trim();
 
@@ -115,7 +120,6 @@ const LanderPage = () => {
 
     // ✅ Convert full name to valid username
     const validUsername = trimmedName
-      .toLowerCase()
       .replace(/\s+/g, "_") // replace spaces with underscore
       .replace(/[^a-z0-9@.+-_]/gi, ""); // remove invalid chars
 
@@ -132,7 +136,8 @@ const LanderPage = () => {
 
       switchMode("login", {
         force: true,
-        successMessage: "Account created successfully. Sign in to continue.",
+        successMessage:
+          "Account created successfully. Please Contact Adminstrator for access.",
       });
     } catch (err) {
       console.error("Register error:", err?.response?.data);
@@ -155,11 +160,20 @@ const LanderPage = () => {
     if (formError) {
       const timer = setTimeout(() => {
         setFormError("");
-      }, 1700); // 3 seconds
+      }, 3000);
 
       return () => clearTimeout(timer);
     }
   }, [formError]);
+  useEffect(() => {
+    if (formSuccess) {
+      const timer = setTimeout(() => {
+        setFormSuccess("");
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [formSuccess]);
 
   const formBaseClass =
     "absolute inset-0 w-full transition-all duration-500 ease-in-out transform";
@@ -180,7 +194,7 @@ const LanderPage = () => {
           <div className="flex flex-col items-center gap-1">
             <div className="flex flex-col items-center">
               <h1 className="text-xl md:text-2xl font-semibold text-slate-900">
-                {isLogin ? "Welcome back" : "Create an account"}
+                {isLogin ? "WELCOME" : "Create an Account"}
               </h1>
               <p className="text-sm text-center text-slate-500">
                 {isLogin
@@ -263,13 +277,13 @@ const LanderPage = () => {
               </div>
 
               {formError && isLogin && (
-                <div className="fixed top-87 right-0 z-50 w-full rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-center text-sm text-rose-600 shadow-lg animate-slide-in">
+                <div className="fixed top-87 right-0 z-50 w-full rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-center text-md text-rose-600 shadow-lg animate-slide-in">
                   {formError}
                 </div>
               )}
 
               {formSuccess && isLogin && !formError && (
-                <div className="fixed top-87 right-0 z-50 w-full rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-center text-sm text-emerald-700 shadow-lg animate-slide-in">
+                <div className="fixed top-87 right-0 z-50 w-full rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-center text-md text-emerald-700 shadow-lg animate-slide-in">
                   {formSuccess}
                 </div>
               )}

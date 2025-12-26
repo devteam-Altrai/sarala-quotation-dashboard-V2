@@ -1,8 +1,7 @@
-// const AUTH_URL = "http://127.0.0.1:8000/api/auth/";
-const AUTH_URL = "https://saralaquote.saralaengineering.in/api/auth/";
-// const BASE_URL = "http://127.0.0.1:8000/uploader/";
-const BASE_URL = "https://saralaquote.saralaengineering.in/uploader/";
-const SPI_URL =
-  "https://saralaengineering.sharepoint.com/sites/Sarala_Engineering";
+const AUTH_URL = import.meta.env.VITE_LOGIN_URL;
+
+const BASE_URL = import.meta.env.VITE_FILE_URL;
+
+const SPI_URL = import.meta.env.VITE_SPI_URL;
 
 export { AUTH_URL, BASE_URL, SPI_URL };
