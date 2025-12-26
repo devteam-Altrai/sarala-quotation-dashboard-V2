@@ -18,6 +18,7 @@ const ReviewTable = () => {
   const [error, setError] = useState("");
   const [profitPercentage, setProfitPercentage] = useState(20);
   const [quotationName, setQuotationName] = useState("");
+  const [projectstatus, setProjectstatus] = useState("");
   const [grandTotal, setGrandTotal] = useState(0);
 
   const costFieldLabels = {
@@ -34,6 +35,24 @@ const ReviewTable = () => {
     profit: "PROFIT",
     unit: "UNIT",
     total: "TOTAL",
+    po_reference: "PO REFERENCE",
+  };
+
+  const columnWidths = {
+    part_no: "150px",
+    mat: "100px",
+    vmc: "100px",
+    cnc: "100px",
+    hand: "120px",
+    laser: "120px",
+    bend: "100px",
+    weld: "100px",
+    ext: "80px",
+    quantity: "80px",
+    profit: "85px",
+    unit: "80px",
+    total: "100px",
+    po_reference: "100px",
   };
 
   const costFields = [
@@ -50,6 +69,7 @@ const ReviewTable = () => {
     "profit",
     "unit",
     "total",
+    "po_reference",
   ];
 
   const numericFields = [
@@ -69,7 +89,10 @@ const ReviewTable = () => {
         `${BASE_URL}get_metadata/?projectName=${assembly}`
       );
       if (res.data.status === "ok" && res.data.data.length > 0) {
-        setQuotationName(res.data.data[0].quotationname);
+        const temp = res.data.data[0];
+
+        setQuotationName(temp.quotationname);
+        setProjectstatus(temp.projectStatus);
       }
     } catch (err) {
       console.error("Metadata fetch failed", err);
@@ -85,29 +108,22 @@ const ReviewTable = () => {
         return;
       }
 
-      // Sort data and ensure description fallback
       const sorted = res.data.data
-        .map((item) => ({ ...item, description: item.description || "N/A" }))
+        .map((item) => ({
+          ...item,
+          description: item.description || "N/A",
+        }))
         .sort((a, b) => a.part_no.localeCompare(b.part_no));
 
-      // Get saved profit or fallback to default
-      const savedPercentage = Number(
-        localStorage.getItem(`profit_${assembly}`)
+      // ✅ safely derive profit % from valid row
+      const derivedProfitPercentage = deriveProfitPercentageFromData(sorted);
+
+      setProfitPercentage(derivedProfitPercentage);
+
+      // ✅ recalculate all rows using derived %
+      const recalculatedData = sorted.map((row) =>
+        calculateRow(row, derivedProfitPercentage)
       );
-      const currentProfit = savedPercentage || profitPercentage;
-      setProfitPercentage(currentProfit);
-
-      // Recalculate unit, profit, total immediately
-      const recalculatedData = sorted.map((row) => {
-        const unit = numericFields.reduce(
-          (acc, nf) => acc + Number(row[nf] || 0),
-          0
-        );
-        const profit = (unit * currentProfit) / 100;
-        const total = (unit + profit) * Number(row.quantity || 0);
-
-        return { ...row, unit, profit, total };
-      });
 
       setTableData(recalculatedData);
       recalcGrandTotal(recalculatedData);
@@ -128,41 +144,58 @@ const ReviewTable = () => {
 
   const handleCellChange = (rowIndex, field, value) => {
     const newData = [...tableData];
-    newData[rowIndex][field] = value;
+    newData[rowIndex] = {
+      ...newData[rowIndex],
+      [field]: value,
+    };
 
-    const unit = numericFields.reduce(
-      (acc, nf) => acc + Number(newData[rowIndex][nf] || 0),
-      0
-    );
-
-    const profit = (unit * profitPercentage) / 100;
-    const quantity = Number(newData[rowIndex].quantity || 0);
-    const total = (unit + profit) * quantity;
-
-    newData[rowIndex].unit = unit;
-    newData[rowIndex].profit = profit;
-    newData[rowIndex].total = total;
+    newData[rowIndex] = calculateRow(newData[rowIndex], profitPercentage);
 
     setTableData(newData);
     recalcGrandTotal(newData);
   };
 
+  const calculateRow = (row, profitPercentage) => {
+    const baseCost = numericFields.reduce(
+      (acc, nf) => acc + Number(row[nf] || 0),
+      0
+    );
+
+    const profit = (baseCost * profitPercentage) / 100;
+    const unit = baseCost + profit;
+    const quantity = Number(row.quantity || 0);
+    const total = unit * quantity;
+
+    return {
+      ...row,
+      profit,
+      unit,
+      total,
+    };
+  };
+
   const handleProfitSlider = (value) => {
     setProfitPercentage(value);
-    localStorage.setItem(`profit_${assembly}`, value);
 
-    const newData = tableData.map((row) => {
-      const unit = numericFields.reduce(
-        (acc, nf) => acc + Number(row[nf] || 0),
-        0
-      );
-      const profit = (unit * value) / 100;
-      const total = (unit + profit) * Number(row.quantity || 0);
-      return { ...row, unit, profit, total };
-    });
+    const newData = tableData.map((row) => calculateRow(row, value));
 
     setTableData(newData);
     recalcGrandTotal(newData);
+  };
+
+  const deriveProfitPercentageFromData = (rows) => {
+    for (const row of rows) {
+      const baseCost = numericFields.reduce(
+        (acc, nf) => acc + Number(row[nf] || 0),
+        0
+      );
+
+      if (baseCost > 0 && Number(row.profit) > 0) {
+        return Math.round((Number(row.profit) / baseCost) * 100);
+      }
+    }
+
+    return profitPercentage; // ✅ safe fallback
   };
 
   const handleSave = async () => {
@@ -173,10 +206,11 @@ const ReviewTable = () => {
         projectName: assembly,
         quotationname: quotationName,
         grandTotal,
+        projectStatus: projectstatus,
       });
-      alert("Data saved successfully!");
+      alert("✅ Data saved successfully!");
     } catch {
-      alert("Failed to save data");
+      alert("❌ Failed to save");
     }
   };
 
@@ -210,13 +244,14 @@ const ReviewTable = () => {
       "UNIT PRICE": item.unit?.toFixed(2) || "",
       QUANTITY: item.quantity || "",
       "TOTAL PRICE": item.total?.toFixed(2) || "",
+      "PO REFERENCE": item.po_reference || "",
     }));
 
     // ✅ Insert Grand Total row with clear name
     exportData.push({
       "Sl No": "",
       "Part No.": "",
-      Description: "Grand Total", // <-- Clear label here
+      Description: "Grand Total",
       "MATERIAL COST": "",
       "VMC COST": "",
       "CNC COST": "",
@@ -229,6 +264,7 @@ const ReviewTable = () => {
       "UNIT PRICE": "",
       QUANTITY: "",
       "TOTAL PRICE": grandTotal.toFixed(2),
+      "PO REFERENCE": "",
     });
 
     const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -326,6 +362,7 @@ const ReviewTable = () => {
           "PROFIT",
           "UNIT",
           "TOTAL",
+          "PO REFERENCE",
         ],
       ],
       body: sortedData.map((item) => [
@@ -343,9 +380,16 @@ const ReviewTable = () => {
         (item.profit || 0).toFixed(2),
         (item.unit || 0).toFixed(2),
         (item.total || 0).toFixed(2),
+        item.po_reference || "",
       ]),
       startY: 20,
       styles: { fontSize: 6 },
+
+      headStyles: {
+        fillColor: [14, 156, 199],
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+      },
     });
 
     doc.text(
@@ -422,8 +466,12 @@ const ReviewTable = () => {
             <thead className="bg-gray-100 uppercase text-xs sticky top-0 z-10">
               <tr>
                 {costFields.map((field) => (
-                  <th key={field} className="px-3 py-3 border">
-                    {costFieldLabels[field]}
+                  <th
+                    key={field}
+                    className="px-1 py-3 border text-center"
+                    style={{ width: columnWidths[field] }}
+                  >
+                    <span>{costFieldLabels[field]}</span>
                   </th>
                 ))}
               </tr>
@@ -435,28 +483,37 @@ const ReviewTable = () => {
                 .map((item, idx) => (
                   <tr key={idx} className="hover:bg-gray-50">
                     {costFields.map((field) => (
-                      <td key={field} className="px-4 py-3 border text-center">
-                        {["unit", "profit", "total"].includes(field) ? (
+                      <td
+                        key={field}
+                        className={`py-3 border text-center ${
+                          field === "part_no"
+                            ? "whitespace-normal break-words max-w-[200px]"
+                            : ""
+                        }`}
+                        style={{ width: columnWidths[field] }}
+                      >
+                        {field === "part_no" ? (
+                          // READ-ONLY TEXT (WRAPS)
+                          <span>{item.part_no}</span>
+                        ) : ["unit", "profit", "total"].includes(field) ? (
+                          // CALCULATED FIELDS (ALSO READ-ONLY)
                           <span>{item[field]?.toFixed(2)}</span>
                         ) : (
-                          <span>
-                            <input
-                              type="text"
-                              value={item[field] === 0 ? "" : item[field] ?? ""}
-                              onChange={(e) =>
-                                handleCellChange(
-                                  idx,
-                                  field,
-                                  field === "part_no"
-                                    ? e.target.value
-                                    : e.target.value === ""
-                                    ? ""
-                                    : Number(e.target.value)
-                                )
-                              }
-                              className="w-full text-center border-none focus:ring-0"
-                            />
-                          </span>
+                          // ALL OTHER FIELDS STAY EDITABLE
+                          <input
+                            type="text"
+                            value={item[field] === 0 ? "" : item[field] ?? ""}
+                            onChange={(e) =>
+                              handleCellChange(
+                                idx,
+                                field,
+                                e.target.value === ""
+                                  ? ""
+                                  : Number(e.target.value)
+                              )
+                            }
+                            className="w-full text-center border-none outline-none focus:outline-none"
+                          />
                         )}
                       </td>
                     ))}
@@ -466,8 +523,11 @@ const ReviewTable = () => {
           </table>
         </div>
 
-        <div className="text-right mt-1 md:mt-3 text-xl font-bold">
-          GRAND TOTAL: {grandTotal.toFixed(2)}
+        <div className="text-right mt-1 md:mt-3 text-xl font-bold text-[#444] mr-2">
+          GRAND TOTAL:{" "}
+          <span className="text-[#0e9dc7] text-xl">
+            {grandTotal.toFixed(2)}
+          </span>
         </div>
       </div>
     </div>

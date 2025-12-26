@@ -7,7 +7,11 @@ import ShowCase from "../pages/ShowCase";
 import ReviewTable from "../pages/ReviewTable";
 import Viewer from "../pages/Viewer";
 import File from "../pages/File";
+import OrderTracking from "../pages/OrderTracking";
+import JobTracking from "../pages/JobTracking";
 
+import { element } from "prop-types";
+import BomTable from "../components/BomTable";
 const landerpageRoutes = {
   path: "/",
   name: "root",
@@ -45,20 +49,42 @@ const pricelistRoutes = {
 //   name: "File viewer",
 //   element: <ShowCase />,
 //   route: Route,
-//   displaySidebar: false,
+//   displaySidebar: true,
 // };
-const settings = {
-  path: "/settings",
-  name: "Settings",
-  element: <Settings />,
-  route: Route,
-};
+// const settings = {
+//   path: "/settings",
+//   name: "Settings",
+//   element: <Settings />,
+//   route: Route,
+// };
 const reviewFiles = {
   path: "/review",
   name: "Review",
   element: <ReviewTable />,
   route: Route,
   displaySidebar: false,
+};
+const orderTracking = {
+  path: "/order",
+  name: "Order",
+  element: <OrderTracking />,
+  route: Route,
+  displaySidebar: false,
+};
+const jobTracker = {
+  path: "/job",
+  name: "Job",
+  element: <JobTracking />,
+  route: Route,
+  children: [
+    {
+      path: "/job/bom",
+      name: "BOM",
+      element: <BomTable />,
+      route: Route,
+      displaySidebar: false,
+    },
+  ],
 };
 
 const listedRoutes = (routes) => {
@@ -80,8 +106,10 @@ const authProtectedRoutes = listedRoutes([
   viewerRoutes,
   pricelistRoutes,
   // showcaseRoutes,
-  settings,
+  // settings,
   reviewFiles,
+  orderTracking,
+  jobTracker,
 ]);
 
 const publicRoutes = listedRoutes([landerpageRoutes]);
@@ -95,6 +123,8 @@ export {
   viewerRoutes,
   pricelistRoutes,
   // showcaseRoutes,
-  settings,
+  // settings,
   reviewFiles,
+  orderTracking,
+  jobTracker,
 };
