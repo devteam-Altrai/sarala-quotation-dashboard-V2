@@ -7,6 +7,11 @@ import ShowCase from "../pages/ShowCase";
 import ReviewTable from "../pages/ReviewTable";
 import Viewer from "../pages/Viewer";
 import File from "../pages/File";
+import OrderTracking from "../pages/OrderTracking";
+import JobTracking from "../pages/JobTracking";
+
+import { element } from "prop-types";
+import BomTable from "../components/BomTable";
 const landerpageRoutes = {
   path: "/",
   name: "root",
@@ -39,25 +44,47 @@ const pricelistRoutes = {
   element: <PriceList />,
   route: Route,
 };
-const showcaseRoutes = {
-  path: "/fileviewer",
-  name: "File viewer",
-  element: <ShowCase />,
-  route: Route,
-  displaySidebar: false,
-};
-const settings = {
-  path: "/settings",
-  name: "Settings",
-  element: <Settings />,
-  route: Route,
-};
+// const showcaseRoutes = {
+//   path: "/fileviewer",
+//   name: "File viewer",
+//   element: <ShowCase />,
+//   route: Route,
+//   displaySidebar: true,
+// };
+// const settings = {
+//   path: "/settings",
+//   name: "Settings",
+//   element: <Settings />,
+//   route: Route,
+// };
 const reviewFiles = {
   path: "/review",
   name: "Review",
   element: <ReviewTable />,
   route: Route,
   displaySidebar: false,
+};
+const orderTracking = {
+  path: "/order",
+  name: "Order",
+  element: <OrderTracking />,
+  route: Route,
+  displaySidebar: false,
+};
+const jobTracker = {
+  path: "/job",
+  name: "Job",
+  element: <JobTracking />,
+  route: Route,
+  children: [
+    {
+      path: "/job/bom",
+      name: "BOM",
+      element: <BomTable />,
+      route: Route,
+      displaySidebar: false,
+    },
+  ],
 };
 
 const listedRoutes = (routes) => {
@@ -78,9 +105,11 @@ const authProtectedRoutes = listedRoutes([
   filesRoutes,
   viewerRoutes,
   pricelistRoutes,
-  showcaseRoutes,
-  settings,
+  // showcaseRoutes,
+  // settings,
   reviewFiles,
+  orderTracking,
+  jobTracker,
 ]);
 
 const publicRoutes = listedRoutes([landerpageRoutes]);
@@ -93,7 +122,9 @@ export {
   filesRoutes,
   viewerRoutes,
   pricelistRoutes,
-  showcaseRoutes,
-  settings,
+  // showcaseRoutes,
+  // settings,
   reviewFiles,
+  orderTracking,
+  jobTracker,
 };

@@ -5,7 +5,8 @@ import Layout from "../layout/Layout";
 import { useAuthContext } from "../auth/AuthContext";
 
 const AllRoutes = () => {
-  const { isAuthenticated, loading } = useAuthContext();
+  const { isAuthenticated, loading, role } = useAuthContext();
+  const jobaccess = import.meta.env.VITE_ROLE3;
 
   if (loading) {
     return <div>Loading...</div>;
@@ -19,19 +20,42 @@ const AllRoutes = () => {
           key={`public-${idx}`}
         />
       ))}
-      {authProtectedRoutes.map((route, idx) => (
-        <Route
-          key={`auth-${idx}`}
-          path={route.path}
-          element={
-            isAuthenticated ? (
-              <Layout>{route.element}</Layout>
-            ) : (
-              <Navigate to={{ pathname: "/" }} />
-            )
-          }
-        />
-      ))}
+      {authProtectedRoutes.map((route, idx) => {
+        if (
+          role === jobaccess &&
+          typeof route.path === "string" &&
+          !route.path.startsWith("/job") &&
+          !route.path.startsWith("/order")
+        ) {
+          return (
+            <Route
+              key={`auth-redirect-${idx}`}
+              path={route.path}
+              element={
+                isAuthenticated ? (
+                  <Navigate to="/job" replace />
+                ) : (
+                  <Navigate to={{ pathname: "/" }} />
+                )
+              }
+            />
+          );
+        }
+
+        return (
+          <Route
+            key={`auth-${idx}`}
+            path={route.path}
+            element={
+              isAuthenticated ? (
+                <Layout>{route.element}</Layout>
+              ) : (
+                <Navigate to={{ pathname: "/" }} />
+              )
+            }
+          />
+        );
+      })}
     </Routes>
   );
 };
