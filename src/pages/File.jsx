@@ -117,7 +117,7 @@ const File = () => {
   };
 
   const sortedFiles = [...files].sort(
-    (a, b) => new Date(b.uploaded_at) - new Date(a.uploaded_at)
+    (a, b) => new Date(b.uploaded_at) - new Date(a.uploaded_at),
   );
 
   return (
@@ -134,7 +134,7 @@ const File = () => {
         </div>
         <div className="hidden md:block">
           <button onClick={handleMakeQuotation} className="m-3 relative group">
-            <div className="absolute top-1/2 right-1 -translate-y-1/2 duration-5 w-10 group-hover:w-[95%] h-[82%] bg-white flex justify-center items-center rounded-md p-1">
+            <div className="absolute top-1/2 right-1 -translate-y-1/2 duration-150 w-10 group-hover:w-[95.3%] h-[82%] bg-white flex justify-center items-center rounded-md p-1">
               <FilePlus2 style={{ width: 20, height: 20 }} color="#0e9dc7" />
             </div>
             <div className="bg-[#3da5c5] w-40 h-10 flex justify-start items-center rounded-lg">

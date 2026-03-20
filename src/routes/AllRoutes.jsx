@@ -21,7 +21,12 @@ const AllRoutes = () => {
         />
       ))}
       {authProtectedRoutes.map((route, idx) => {
-        if (role === jobaccess && !route.path.startsWith("/job")) {
+        if (
+          role === jobaccess &&
+          typeof route.path === "string" &&
+          !route.path.startsWith("/job") &&
+          !route.path.startsWith("/order")
+        ) {
           return (
             <Route
               key={`auth-redirect-${idx}`}

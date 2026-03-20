@@ -683,6 +683,13 @@ const OrderTracking = () => {
                         {view === role ? (
                           <div className="border-t border-slate-100 bg-slate-50 pl-6 pr-6 pb-6 pt-1 h-[28vh] overflow-y-auto rounded-bl-2xl rounded-br-2xl">
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                              {project.po_number === "N/A" && (
+                                <div className="flex flex-col justify-center items-center gap-2 mt-3">
+                                  <p className="text-center text-xl text-[#0e9dc7]">
+                                    PO CONTACT : {project.po_contact}
+                                  </p>
+                                </div>
+                              )}
                               <div className="flex flex-col justify-center items-center gap-2 mt-3">
                                 <p className="text-center text-xl text-[#0e9dc7]">
                                   ORDER No. : {project.order_serial}
@@ -727,6 +734,13 @@ const OrderTracking = () => {
                           <div className="border-t border-slate-100 bg-slate-50 pl-6 pr-6 pb-6 pt-1 h-[34vh] overflow-y-auto rounded-bl-xl rounded-br-xl">
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                               {/* ORDER SERIAL */}
+                              {project.po_number === "N/A" && (
+                                <div className="flex flex-col justify-center items-center gap-2 mt-3">
+                                  <p className="text-center text-xl text-[#0e9dc7]">
+                                    PO CONTACT : {project.po_contact}
+                                  </p>
+                                </div>
+                              )}
                               <div className="flex flex-col justify-center items-center gap-2 mt-3">
                                 <p className="text-center text-xl text-[#0e9dc7]">
                                   ORDER No. : {project.order_serial}

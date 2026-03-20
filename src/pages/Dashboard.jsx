@@ -1,5 +1,5 @@
-import React, { use, useEffect, useRef, useState } from "react";
-import { CloudUpload } from "lucide-react";
+import React, { use, useEffect, useRef, useState, useMemo } from "react";
+import { CloudUpload, Info, X } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { deleteFileByName, fetchFiles } from "../redux/FilesSlice";
 import Loading from "../components/Loading";
@@ -12,7 +12,16 @@ import { MdOutlineRateReview, MdDelete } from "react-icons/md";
 
 const StatusDropdown = ({ value, options, onChange }) => {
   const STATUS_STYLES = {
-    PENDING: { border: "border-red-500", bg: "bg-red-500", text: "text-black" },
+    CANCELLED: {
+      border: "border-red-500",
+      bg: "bg-red-500",
+      text: "text-black",
+    },
+    PENDING: {
+      border: "border-[#ffea00]",
+      bg: "bg-[#ffea00]",
+      text: "text-black",
+    },
     REVIEW: {
       border: "border-orange-500",
       bg: "bg-orange-500",
@@ -23,9 +32,14 @@ const StatusDropdown = ({ value, options, onChange }) => {
       bg: "bg-green-500",
       text: "text-black",
     },
+    "PO PENDING": {
+      border: "border-blue-100",
+      bg: "bg-blue-300",
+      text: "text-black",
+    },
     "PO RECEIVED": {
-      border: "border-green-500",
-      bg: "bg-green-500",
+      border: "border-blue-300",
+      bg: "bg-blue-500",
       text: "text-black",
     },
   };
@@ -61,7 +75,7 @@ const StatusDropdown = ({ value, options, onChange }) => {
   };
 
   return (
-    <div ref={ref} className="relative inline-block sm:w-[120px] md:w-[125px]">
+    <div ref={ref} className="relative inline-block sm:w-[110px] md:w-[130px]">
       <button
         type="button"
         onClick={handleToggle}
@@ -117,6 +131,7 @@ const Dashboard = () => {
   const [uploading, setUploading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [quoteString, setQuoteString] = useState("");
+  const [localQuote, setLocalQuote] = useState({});
 
   const [showPoPopup, setShowPoPopup] = useState(false);
   const [popupFilename, setPopupFilename] = useState("");
@@ -127,10 +142,23 @@ const Dashboard = () => {
   const [formSuccess, setFormSuccess] = useState("");
   const [deleting, setDeleting] = useState(false);
 
+  const [showPoContact, setShowPoContact] = useState(false);
+  const [poContact, setPoContact] = useState("");
+
   const [localStatus, setLocalStatus] = useState({});
   const [previousStatus, setPreviousStatus] = useState({});
 
-  const statusOptions = ["PENDING", "REVIEW", "SENT", "PO RECEIVED"];
+  const [extraInfo, setExtraInfo] = useState(false);
+  const [extraInfoInput, setExtraInfoInput] = useState("");
+
+  const statusOptions = [
+    "CANCELLED",
+    "PENDING",
+    "REVIEW",
+    "SENT",
+    "PO PENDING",
+    "PO RECEIVED",
+  ];
 
   useEffect(() => {
     dispatch(fetchFiles());
@@ -227,7 +255,7 @@ const Dashboard = () => {
   const filteredFiles = files.filter(
     (file) =>
       file.quotationname?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      file.name.toLowerCase().includes(searchQuery.toLowerCase())
+      file.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   // ------------ SORTING ---------------
@@ -265,7 +293,7 @@ const Dashboard = () => {
       if (!resp.ok) {
         const errText = await resp.text();
         throw new Error(
-          `Dashboard update failed: HTTP ${resp.status} - ${errText}`
+          `Dashboard update failed: HTTP ${resp.status} - ${errText}`,
         );
       }
 
@@ -304,9 +332,47 @@ const Dashboard = () => {
     }
   };
 
+  const savePoContact = async () => {
+    setUploading(true);
+
+    try {
+      const resp1 = await fetch(`${BASE_URL}pending/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectName: popupFilename,
+          projectStatus: "PO PENDING",
+        }),
+      });
+
+      if (!resp1.ok) {
+        throw new Error("Failed to update project status");
+      }
+
+      const resp2 = await fetch(`${BASE_URL}addcontact/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectName: popupFilename,
+          quotationname: popupQuote,
+          po_contact: poContact,
+          po_number: "N/A",
+        }),
+      });
+
+      if (!resp2.ok) {
+        throw new Error("Failed to save PO contact");
+      }
+    } catch (error) {
+      alert("An unexpected error occurred");
+    } finally {
+      dispatch(fetchFiles());
+      setUploading(false);
+    }
+  };
+
   const handleDelete = async (projectName) => {
     setDeleting(true);
-
     try {
       const response = await fetch(`${BASE_URL}delete/`, {
         method: "POST",
@@ -362,6 +428,75 @@ const Dashboard = () => {
       setUploading(false);
     }
   };
+
+  const addOnInfo = async (projectName, ext_info) => {
+    setUploading(true);
+    try {
+      const response = await fetch(`${BASE_URL}addinfo/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          projectName,
+          ext_info,
+        }),
+      });
+
+      if (response.ok) {
+        const apiMessage = "✅ Project Note Added";
+        setFormSuccess(apiMessage);
+        setUploading(false);
+      }
+    } catch (err) {
+      console.error("Failed to update quotation name", err);
+    }
+  };
+  const updateQuotationName = async (projectName, quotationname) => {
+    setUploading(true);
+    try {
+      const response = await fetch(`${BASE_URL}rename_quote/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          projectName,
+          quotationname,
+        }),
+      });
+
+      if (response.ok) {
+        dispatch(
+          updateQuotationName({
+            fileName: projectName,
+            newQuotationName: quotationname,
+          }),
+        );
+
+        dispatch(fetchFiles());
+
+        setUploading(false);
+        alert("✅ Quotation name Updated");
+      }
+    } catch (err) {
+      console.error("Failed to update quotation name", err);
+      setUploading(false);
+    }
+  };
+
+  function debounce(fn, delay = 1000) {
+    let timer;
+    return (...args) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => fn(...args), delay);
+    };
+  }
+
+  const debouncedUpdateQuotationName = useMemo(
+    () => debounce(updateQuotationName, 2000),
+    [],
+  );
 
   useEffect(() => {
     if (formSuccess) {
@@ -427,7 +562,7 @@ const Dashboard = () => {
                       UPLOAD
                     </p>
 
-                    <div className="absolute top-1/2 right-1 -translate-y-1/2 w-10 h-[80%] bg-white rounded-md flex items-center justify-center transition-all duration-4 group-hover:w-[94%]">
+                    <div className="absolute top-1/2 right-1 -translate-y-1/2 w-10 h-[80%] bg-white rounded-md flex items-center justify-center transition-all duration-100 group-hover:w-[94%]">
                       <CloudUpload
                         color="#0e9dc7"
                         style={{ width: 20, height: 20 }}
@@ -511,7 +646,29 @@ const Dashboard = () => {
                       <td className="px-6 py-4">
                         {new Date(file.uploaded_at).toLocaleDateString()}
                       </td>
-                      <td className="px-6 py-4">{file.quotationname}</td>
+                      {/* <td className="px-6 py-4">{file.quotationname}</td> */}
+                      <td className="py-4">
+                        {CAN_DELETE.includes(role) ? (
+                          <input
+                            type="text"
+                            className="rounded py-1 w-full text-center text-sm md:text-[16.5px]"
+                            value={localQuote[file.name] ?? file.quotationname}
+                            onChange={(e) => {
+                              const value = e.target.value;
+
+                              setLocalQuote((prev) => ({
+                                ...prev,
+                                [file.name]: value,
+                              }));
+
+                              debouncedUpdateQuotationName(file.name, value);
+                            }}
+                          />
+                        ) : (
+                          file.quotationname
+                        )}
+                      </td>
+
                       <td className="px-6 py-4">
                         {file.grandTotal
                           ? new Date(file.last_date).toLocaleDateString()
@@ -554,12 +711,19 @@ const Dashboard = () => {
                                 setPoptTotal(file.grandTotal);
                                 setPopupInput("");
                                 setShowPoPopup(true);
+                              } else if (newStatus === "PO PENDING") {
+                                setPopupFilename(file.name);
+                                setPopQuote(file.quotationname);
+                                setPoptTotal(file.grandTotal);
+                                setPopupInput("N/A");
+                                setPoContact("");
+                                setShowPoContact(true);
                               } else {
                                 projectStatusUpdate(
                                   file.name,
                                   file.quotationname,
                                   file.grandTotal,
-                                  newStatus
+                                  newStatus,
                                 );
                               }
                             }}
@@ -577,11 +741,23 @@ const Dashboard = () => {
                               style={{ width: "25px", height: "25px" }}
                             />
                           </button>
+                          <button
+                            onClick={() => {
+                              setExtraInfoInput(file.ext_info);
+                              setPopupFilename(file.name);
+                              setExtraInfo(true);
+                            }}
+                          >
+                            <Info
+                              className="hover:text-[#0e9dc7] "
+                              style={{ width: "25px", height: "25px" }}
+                            />
+                          </button>
                           {CAN_DELETE.includes(role) && (
                             <button
                               onClick={() =>
                                 window.confirm(
-                                  "Are You sure you want to delete this assembly?"
+                                  "Are You sure you want to delete this assembly?",
                                 )
                                   ? handleDelete(file.name)
                                   : null
@@ -642,6 +818,76 @@ const Dashboard = () => {
           ))}
         </div>
       </div>
+      {showPoContact && (
+        <div className="fixed inset-0 backdrop-blur-lg flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-100">
+            <h2 className="text-xl font-semibold mb-4 text-center">
+              PO Contact Info
+            </h2>
+
+            <div className="mb-3">
+              <label className="text-sm font-semibold">
+                ASSEMBLY : {popupFilename}
+              </label>
+            </div>
+
+            <div className="mb-4">
+              <label className="text-sm font-semibold">
+                Enter Contact Name
+              </label>
+              <input
+                type="text"
+                value={poContact}
+                onChange={(e) => setPoContact(e.target.value)}
+                className="w-full mt-1 p-2 border border-[#3da5c5] rounded"
+              />
+            </div>
+
+            <div className="flex justify-between">
+              <button
+                className="px-4 py-2 bg-gray-300 rounded"
+                onClick={() => {
+                  const prevStatus = previousStatus[popupFilename];
+
+                  setLocalStatus((prev) => ({
+                    ...prev,
+                    [popupFilename]: prevStatus,
+                  }));
+
+                  projectStatusUpdate(
+                    popupFilename,
+                    popupQuote,
+                    popupTotal,
+                    prevStatus,
+                  );
+
+                  setShowPoContact(false);
+                  setPoContact("");
+                }}
+              >
+                Cancel
+              </button>
+
+              <button
+                className={`px-4 py-2 text-white rounded 
+            ${
+              poContact.trim()
+                ? "bg-[#3da5c5]"
+                : "bg-gray-400 cursor-not-allowed"
+            }`}
+                disabled={!poContact.trim()}
+                onClick={async () => {
+                  if (!poContact.trim()) return;
+                  savePoContact(popupFilename, popupInput);
+                  setShowPoContact(false);
+                }}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {showPoPopup && (
         <div className="fixed inset-0 backdrop-blur-lg flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-100">
@@ -656,7 +902,7 @@ const Dashboard = () => {
             </div>
 
             <div className="mb-4">
-              <label className="text-sm font-semibold">Enter Details</label>
+              <label className="text-sm font-semibold">Enter Po Number</label>
               <input
                 type="text"
                 value={popupInput}
@@ -680,7 +926,7 @@ const Dashboard = () => {
                     popupFilename,
                     popupQuote,
                     popupTotal,
-                    prevStatus
+                    prevStatus,
                   );
 
                   setShowPoPopup(false);
@@ -702,6 +948,38 @@ const Dashboard = () => {
                   if (!popupInput.trim()) return;
                   saveponumber(popupFilename, popupInput);
                   setShowPoPopup(false);
+                }}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {extraInfo && (
+        <div className="fixed inset-0 backdrop-blur-[1px] flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-100">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-center">Note</h2>
+              <button onClick={() => setExtraInfo(false)}>
+                <X />
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <textarea
+                value={extraInfoInput || ""}
+                onChange={(e) => setExtraInfoInput(e.target.value)}
+                className="w-full mt-1 p-2 border border-[#3da5c5] rounded h-32 resize-none overflow-x-auto overflow-y-auto whitespace-nowrap outline-[#3da5c5] focus:outline-[#3da5c5]"
+                placeholder="Type here ..."
+              />
+            </div>
+
+            <div className="flex justify-center">
+              <button
+                className="px-4 py-2 text-white bg-[#3da5c5] rounded"
+                onClick={() => {
+                  addOnInfo(popupFilename, extraInfoInput);
                 }}
               >
                 Confirm

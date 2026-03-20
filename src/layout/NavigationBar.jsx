@@ -79,7 +79,7 @@ const NavigationBar = () => {
   // Update sliding tab highlight
   useEffect(() => {
     const index = Menu_Items.findIndex(
-      (item) => item.url === location.pathname
+      (item) => item.url === location.pathname,
     );
     const el = tabRefs.current[index];
     if (el) {
@@ -205,7 +205,8 @@ const NavigationBar = () => {
                 }}
               />
               {Menu_Items.filter(
-                (item) => !item.allowedRoles || item.allowedRoles.includes(role)
+                (item) =>
+                  !item.allowedRoles || item.allowedRoles.includes(role),
               ).map((item, index) => (
                 <NavLink
                   key={item.key}
@@ -299,7 +300,7 @@ const NavigationBar = () => {
                           className="m-3 relative group"
                           onClick={handleQuoteupdate}
                         >
-                          <div className="absolute top-1/2 right-1 -translate-y-1/2 duration-5 w-10 group-hover:w-[92.7%] h-[82%] bg-white flex justify-center items-center rounded-md p-1">
+                          <div className="absolute top-1/2 right-1 -translate-y-1/2 duration-50 w-10 group-hover:w-[92.7%] h-[82%] bg-white flex justify-center items-center rounded-md p-1">
                             <PenLine
                               color="#0e9dc7"
                               style={{ width: 20, height: 20 }}
@@ -382,7 +383,7 @@ const NavigationBar = () => {
                                     className="m-3 relative group"
                                     onClick={() => handleAccess(user.id)}
                                   >
-                                    <div className="absolute top-1/2 right-1 -translate-y-1/2 duration-5 w-10 group-hover:w-[95.5%] h-[82%] bg-white flex justify-center items-center rounded-md p-1">
+                                    <div className="absolute top-1/2 right-1 -translate-y-1/2 duration-50 w-10 group-hover:w-[95.5%] h-[82%] bg-white flex justify-center items-center rounded-md p-1">
                                       <CloudCheck
                                         color="#0e9dc7"
                                         style={{ width: 20, height: 20 }}
@@ -415,7 +416,7 @@ const NavigationBar = () => {
                       className="m-3 relative group"
                       onClick={handleLogoutConfirm}
                     >
-                      <div className="absolute top-1/2 right-1 -translate-y-1/2 duration-5 w-10 group-hover:w-[93.9%] h-[82%] bg-white flex justify-center items-center rounded-md p-1">
+                      <div className="absolute top-1/2 right-1 -translate-y-1/2 duration-50 w-10 group-hover:w-[93.9%] h-[82%] bg-white flex justify-center items-center rounded-md p-1">
                         <LogOut
                           color="#0e9dc7"
                           style={{ width: 20, height: 20 }}
@@ -433,7 +434,7 @@ const NavigationBar = () => {
               </div>
             </div>
           </div>,
-          document.body
+          document.body,
         )}
 
       {isMenuOpen &&
@@ -484,7 +485,7 @@ const NavigationBar = () => {
               </nav>
             </div>
           </div>,
-          document.body
+          document.body,
         )}
     </>
   );

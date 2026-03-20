@@ -24,7 +24,7 @@ const EDITABLE_FIELDS = new Set(["quantity", "part_status", "part_remark"]);
 
 const JOB_STATUSES = [
   "NOT YET",
-  "MATERIAL PURCHASE",
+  "RM PROCESSING",
   "MACHINING",
   "FINISHING",
   "QC",
@@ -34,6 +34,7 @@ const JOB_STATUSES = [
 const STATUS_COLORS = {
   "NOT YET": "text-red-500",
   "MATERIAL PURCHASE": "text-yellow-800",
+  "RM PROCESSING": "text-yellow-800",
   MACHINING: "text-orange-500",
   FINISHING: "text-yellow-400",
   QC: "text-blue-500",
@@ -63,7 +64,7 @@ const BomTable = () => {
       setLoading(true);
       try {
         const res = await axios.get(
-          `${BASE_URL}fetchbom/?project_name=${projectName}`
+          `${BASE_URL}fetchbom/?project_name=${projectName}`,
         );
 
         if (res.data.status === "ok") {
@@ -107,7 +108,7 @@ const BomTable = () => {
   const handleCellChange = (rowIndex, key, value) => {
     setIsDirty(true);
     setBomData((prev) =>
-      prev.map((row, i) => (i === rowIndex ? { ...row, [key]: value } : row))
+      prev.map((row, i) => (i === rowIndex ? { ...row, [key]: value } : row)),
     );
   };
 
@@ -386,7 +387,7 @@ const BomTable = () => {
                                       handleCellChange(
                                         idx,
                                         "part_status",
-                                        status
+                                        status,
                                       );
                                       setOpenIndex(null);
                                     }}

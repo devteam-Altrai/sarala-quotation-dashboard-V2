@@ -46,7 +46,7 @@ const Menu_Items = [
     key: "OrderTracking",
     label: "ORDER TRACKING",
     url: "/order",
-    allowedRoles: [role1, role2],
+    allowedRoles: [role1, role2, role3],
   },
   {
     key: "jobTracking",
