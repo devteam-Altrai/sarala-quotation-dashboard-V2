@@ -71,7 +71,8 @@ const LanderPage = () => {
         res.data.access,
         res.data.refresh,
         res.data.role,
-        res.data.username
+        res.data.username,
+        res.data.id
       );
       navigate("/dashboard");
     } catch (err) {

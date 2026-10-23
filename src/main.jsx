@@ -5,13 +5,16 @@ import App from "./App.jsx";
 import { AuthProvider } from "./auth/AuthContext.jsx";
 import { store } from "../src/redux/Index.js";
 import { Provider } from "react-redux";
+import { FileWebSocketProvider } from "./context/webSocketContext.jsx";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <Provider store={store}>
       <AuthProvider>
-        <App />
+        <FileWebSocketProvider>
+          <App />
+        </FileWebSocketProvider>
       </AuthProvider>
     </Provider>
-  </StrictMode>
+  </StrictMode>,
 );

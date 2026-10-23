@@ -277,7 +277,7 @@ const BomTable = () => {
               onClick={() =>
                 !isDirty ||
                 window.confirm("Unsaved changes will be lost. Continue?")
-                  ? navigate("/job")
+                  ? navigate(-1)
                   : null
               }
             >

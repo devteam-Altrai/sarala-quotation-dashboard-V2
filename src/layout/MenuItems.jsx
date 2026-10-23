@@ -48,12 +48,24 @@ const Menu_Items = [
     url: "/order",
     allowedRoles: [role1, role2, role3],
   },
+  // {
+  //   key: "jobTracking",
+  //   label: "JOB TRACKING",
+  //   url: "/job",
+  //   allowedRoles: [role1, role2, role3],
+  // },
+  // {
+  //   key:"assemblyFormatter",
+  //   label: "ASSEMBLY FORMATTER",
+  //   url:"/formatfile",
+  //   allowedRoles:[role1, role2, role3]
+  // },
   {
-    key: "jobTracking",
-    label: "JOB TRACKING",
-    url: "/job",
-    allowedRoles: [role1, role2, role3],
-  },
+    key: "Clients",
+    label: "CLIENTS",
+    url: "/clients",
+    allowedRoles: [role1] 
+  }
 ];
 
 export { Menu_Items };

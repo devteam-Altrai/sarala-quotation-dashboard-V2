@@ -389,7 +389,7 @@ const NavigationBar = () => {
                                         style={{ width: 20, height: 20 }}
                                       />
                                     </div>
-                                    <div className="bg-[#3da5c5] w-46 h-10 flex justify-start items-center rounded-lg">
+                                    <div className="bg-[#3da5c5] w-43 h-10 flex justify-start items-center rounded-lg">
                                       <p className="ml-4 text-white">
                                         GRANT ACCESS
                                       </p>

@@ -12,6 +12,7 @@ const Viewer = () => {
 
   const [models, setModels] = useState([]);
   const [selectedModel, setSelectedModel] = useState(null);
+  const [quantityFlag, setQuantityFlag] = useState();
   const [viewType, setViewType] = useState("pdf");
   const [cache, setCache] = useState({});
   const [loading, setLoading] = useState(false);
@@ -62,6 +63,21 @@ const Viewer = () => {
       ext: cost.ext ?? "",
       quantity: cost.quantity ?? "",
     });
+  };
+
+  const applySelectedCostInput = (cost) => {
+    setCostInput((prev) => ({
+      mat: cost.mat ?? "",
+      vmc: cost.vmc ?? "",
+      cnc: cost.cnc ?? "",
+      hand: cost.hand ?? "",
+      laser: cost.laser ?? "",
+      bend: cost.bend ?? "",
+      weld: cost.weld ?? "",
+      ext: cost.ext ?? "",
+      quantity: quantityFlag,
+    }));
+    console.log("CHnages:", costInput);
   };
 
   const costLabels = {
@@ -153,18 +169,41 @@ const Viewer = () => {
     : null;
 
   const fetchExistingCostData = async (partName) => {
+    // console.log("part_nmae:", partName)
     try {
       const response = await fetch(`${BASE_URL}fetch/?part_no=${partName}`);
 
       const data = await response.json();
+      // console.log("ResP", data.data);
 
       if (data.status === "ok" && Array.isArray(data.data)) {
+        const qty =
+          data.data.find(
+            (p) => p.project_name === fileName && p.part_no === partName,
+          )?.quantity ?? "";
+        setQuantityFlag(qty);
         if (data.data.length > 1) {
           setCostOptions(data.data);
           setShowCostSelectModal(true);
           return;
         }
-        if (data.data.length === 1) applyCostToInputs(data.data[0]);
+        console.log("Log", data.data.length);
+        if (data.data.length === 1){
+
+          applyCostToInputs(data.data[0]);
+        } else {
+            setCostInput({
+                          mat: "",
+                          vmc: "",
+                          cnc: "",
+                          hand: "",
+                          laser: "",
+                          bend: "",
+                          weld: "",
+                          ext: "",
+                          quantity: "",
+                        });
+        }
       }
     } catch (error) {
       console.error("Error fetching existing cost data:", error);
@@ -175,7 +214,7 @@ const Viewer = () => {
 
   const baseCost = NUMERIC_FIELDS.reduce(
     (sum, field) => sum + toNumber(costInput[field]),
-    0
+    0,
   );
 
   const profit = baseCost * PROFIT_PERCENTAGE;
@@ -248,7 +287,7 @@ const Viewer = () => {
                 <div
                   key={i}
                   onClick={() => {
-                    applyCostToInputs(item);
+                    applySelectedCostInput(item);
                     setShowCostSelectModal(false);
                   }}
                   className="border rounded-lg p-4 w-[280px] cursor-pointer hover:border-[#0e9dc7] hover:shadow-md transition"
@@ -282,7 +321,7 @@ const Viewer = () => {
             <button
               onClick={() => {
                 const matchedItem = costOptions.find(
-                  (item) => item.project_name === fileName
+                  (item) => item.project_name === fileName,
                 );
                 if (matchedItem) {
                   applyCostToInputs(matchedItem);
@@ -312,7 +351,9 @@ const Viewer = () => {
                   .map((model) => (
                     <div
                       key={model.name}
-                      onClick={() => setSelectedModel(model)}
+                      onClick={() => {
+                        setSelectedModel(model);
+                      }}
                       className={`cursor-pointer px-3 py-2 mb-2 rounded ${
                         selectedModel?.name === model.name
                           ? "bg-[#0e9dc7] text-white"
@@ -417,17 +458,17 @@ const Viewer = () => {
                     "total",
                   ].map((field) => {
                     const isCalculated = ["profit", "unit", "total"].includes(
-                      field
+                      field,
                     );
 
                     const value =
                       field === "profit"
                         ? profit.toFixed(2)
                         : field === "unit"
-                        ? unit.toFixed(2)
-                        : field === "total"
-                        ? total.toFixed(2)
-                        : costInput[field] || "";
+                          ? unit.toFixed(2)
+                          : field === "total"
+                            ? total.toFixed(2)
+                            : costInput[field] || "";
 
                     return (
                       <div key={field} className="relative">

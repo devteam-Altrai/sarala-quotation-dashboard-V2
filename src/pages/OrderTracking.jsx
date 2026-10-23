@@ -3,6 +3,8 @@ import { SlArrowDown } from "react-icons/sl";
 import { BASE_URL } from "../utils/AppConstant";
 import { useAuthContext } from "../auth/AuthContext";
 import Loading from "../components/Loading";
+import { Info } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const poItems = [
   "PENDING",
@@ -67,6 +69,7 @@ const pystatuscolor = {
 const OrderTracking = () => {
   const [projects, setProjects] = useState([]);
   const { role } = useAuthContext();
+  const navigate = useNavigate();
   const view = import.meta.env.VITE_ROLE2;
 
   // Dropdown open states per project
@@ -98,7 +101,7 @@ const OrderTracking = () => {
   const paymentRefs = useRef([]);
 
   const [openStates, setOpenStates] = useState(
-    Array(projects.length).fill(false)
+    Array(projects.length).fill(false),
   );
 
   useEffect(() => {
@@ -166,8 +169,8 @@ const OrderTracking = () => {
                 dispatch_date: popupDcDate,
                 tracking_number: popupDcTracking,
               }
-            : proj
-        )
+            : proj,
+        ),
       );
     } catch (e) {
       console.error("PO details save failed:", e);
@@ -214,8 +217,8 @@ const OrderTracking = () => {
                 invoice_status: popupInvoiceStatus,
                 invoice_number: popupInvoiceNo,
               }
-            : proj
-        )
+            : proj,
+        ),
       );
     } catch (e) {
       console.error("Invoice details save failed:", e);
@@ -266,12 +269,12 @@ const OrderTracking = () => {
     }
 
     setOpenInvoiceStates((prev) =>
-      prev.map((v, i) => (i === index ? !v : false))
+      prev.map((v, i) => (i === index ? !v : false)),
     );
   };
   const toggleOpenPayment = (index) => {
     setOpenPaymentStates((prev) =>
-      prev.map((v, i) => (i === index ? !v : false))
+      prev.map((v, i) => (i === index ? !v : false)),
     );
     setOpenPOStates(new Array(projects.length).fill(false));
     setOpenInvoiceStates(new Array(projects.length).fill(false));
@@ -290,7 +293,7 @@ const OrderTracking = () => {
   const debouncedTrackingUpdate = useRef(
     debounce((projectName, trackingNumber) => {
       updateTrackingNumberAPI(projectName, trackingNumber);
-    }, 400)
+    }, 400),
   ).current;
 
   const handleTrackingChange = (index, value) => {
@@ -321,7 +324,7 @@ const OrderTracking = () => {
   const debouncedFieldUpdate = useRef(
     debounce((projectName, field, value) => {
       updateFieldAPI(projectName, field, value);
-    }, 400)
+    }, 400),
   ).current;
 
   const handleFieldChange = (index, field, value) => {
@@ -435,6 +438,19 @@ const OrderTracking = () => {
                         {project.projectName}
                       </h2>
                       <div className="flex flex-row w-fit px-3 gap-3">
+                        <button
+                          onClick={() =>
+                            navigate("/job/bom", {
+                              state: {
+                                name: project.projectName,
+                                po_no: project.po_number,
+                              },
+                            })
+                          }
+                          className="relative group hidden md:block"
+                        >
+                          <Info className="text-[#0e9dc7]" />
+                        </button>
                         {/* PO STATUS DROPDOWN */}
                         <div
                           ref={poRefs.current[index]}
@@ -484,8 +500,8 @@ const OrderTracking = () => {
                                       prev.map((p) =>
                                         p.projectName === project.projectName
                                           ? { ...p, po_status: item }
-                                          : p
-                                      )
+                                          : p,
+                                      ),
                                     );
 
                                     setAssemblyName(project.projectName);
@@ -495,10 +511,10 @@ const OrderTracking = () => {
                                       setShowPoPopup(true);
                                       setPopupDc(project.dc_number || "");
                                       setPopupDcDate(
-                                        project.dispatch_date || ""
+                                        project.dispatch_date || "",
                                       );
                                       setPopupDcTracking(
-                                        project.tracking_number || ""
+                                        project.tracking_number || "",
                                       );
                                     } else {
                                       updatePoStatus(project.projectName, item);
@@ -565,8 +581,8 @@ const OrderTracking = () => {
                                       prev.map((p) =>
                                         p.projectName === project.projectName
                                           ? { ...p, invoice_status: item }
-                                          : p
-                                      )
+                                          : p,
+                                      ),
                                     );
 
                                     setAssemblyName(project.projectName);
@@ -575,12 +591,12 @@ const OrderTracking = () => {
                                     if (item === "INVOICED") {
                                       setShowInvoicePopup(true);
                                       setPopupInvoiceNo(
-                                        project.invoice_number || ""
+                                        project.invoice_number || "",
                                       );
                                     } else {
                                       updateInvoiceStatus(
                                         project.projectName,
-                                        item
+                                        item,
                                       );
                                     }
 
@@ -639,13 +655,13 @@ const OrderTracking = () => {
                                       prev.map((p) =>
                                         p.projectName === project.projectName
                                           ? { ...p, payment_status: item }
-                                          : p
-                                      )
+                                          : p,
+                                      ),
                                     );
 
                                     updatePaymentStatus(
                                       project.projectName,
-                                      item
+                                      item,
                                     );
 
                                     toggleOpenPayment(index);
@@ -766,7 +782,7 @@ const OrderTracking = () => {
                                     handleFieldChange(
                                       index,
                                       "dc_number",
-                                      e.target.value
+                                      e.target.value,
                                     )
                                   }
                                   className="w-full rounded-lg border border-slate-200 bg-white py-2 px-4 text-md
@@ -788,7 +804,7 @@ const OrderTracking = () => {
                                     handleFieldChange(
                                       index,
                                       "dispatch_date",
-                                      e.target.value
+                                      e.target.value,
                                     )
                                   }
                                   className="w-full rounded-lg border border-slate-200 bg-white py-2 px-4 text-md
@@ -809,7 +825,7 @@ const OrderTracking = () => {
                                     handleFieldChange(
                                       index,
                                       "invoice_number",
-                                      e.target.value
+                                      e.target.value,
                                     )
                                   }
                                   className="w-full rounded-lg border border-slate-200 bg-white py-2 px-4 text-md
@@ -830,7 +846,7 @@ const OrderTracking = () => {
                                     handleFieldChange(
                                       index,
                                       "tracking_number",
-                                      e.target.value
+                                      e.target.value,
                                     )
                                   }
                                   className="w-full rounded-lg border border-slate-200 bg-white py-2 px-4 text-md
@@ -907,8 +923,8 @@ const OrderTracking = () => {
                       prev.map((proj) =>
                         proj.projectName === assemblyName
                           ? { ...proj, po_status: prevStatus }
-                          : proj
-                      )
+                          : proj,
+                      ),
                     );
                   }
                   setPopupPoStatus("");
@@ -969,8 +985,8 @@ const OrderTracking = () => {
                       prevProjects.map((proj) =>
                         proj.projectName === assemblyName
                           ? { ...proj, invoice_status: prevStatus }
-                          : proj
-                      )
+                          : proj,
+                      ),
                     );
                   }
 

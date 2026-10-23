@@ -8,6 +8,7 @@ import axios from "axios";
 import { BASE_URL, SPI_URL } from "../utils/AppConstant";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../auth/AuthContext";
+import { SlArrowDown } from "react-icons/sl";
 import { MdOutlineRateReview, MdDelete } from "react-icons/md";
 
 const StatusDropdown = ({ value, options, onChange }) => {
@@ -118,8 +119,15 @@ const StatusDropdown = ({ value, options, onChange }) => {
   );
 };
 
+// const clientItems = {
+//   VVDN: "vvdn",
+//   SANMINA: "sanmina",
+//   ASM: "asm",
+//   ANORA: "anora",
+// };
+
 const Dashboard = () => {
-  const { role } = useAuthContext();
+  const { role, user_id } = useAuthContext();
   const CAN_DELETE = [import.meta.env.VITE_ROLE1];
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -129,7 +137,13 @@ const Dashboard = () => {
   const fileInputRef = useRef(null);
 
   const [uploading, setUploading] = useState(false);
+  const [fileSearch, setFileSearch] = useState(false);
+  const [fileUploadPopup, setFileUploadPopup] = useState(false);
+  const [client, setClient] = useState({ key: "", value: "" });
+  const [clientItems, setClientItems] = useState({ key: "", value: "" });
+  const [clientDropdown, setClientDropDown] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [partSearchFiles, setPartSearchFiles] = useState([]);
   const [quoteString, setQuoteString] = useState("");
   const [localQuote, setLocalQuote] = useState({});
 
@@ -173,6 +187,10 @@ const Dashboard = () => {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("site_url", SPI_URL);
+    formData.append("user_id", user_id);
+    formData.append("client", client.value);
+
+    setFileUploadPopup(false);
 
     try {
       setUploading(true);
@@ -181,9 +199,12 @@ const Dashboard = () => {
         headers: { "Content-Type": "multipart/form-data" },
       });
       dispatch(fetchFiles());
-    } finally {
       setUploading(false);
-      e.target.value = "";
+      setFileUploadPopup(false);
+      setClient({ key: "", value: "" });
+      setClientDropDown(false);
+    } catch (err) {
+      console.log("Error in uploading file:", err);
     }
   };
 
@@ -205,6 +226,7 @@ const Dashboard = () => {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       latestQuote = data?.text;
+      console.log("last quote:", latestQuote);
     } catch (err) {
       console.error("Error fetching latest quote:", err);
       alert("Could not fetch the latest quotation from server.");
@@ -219,6 +241,7 @@ const Dashboard = () => {
     const parts = latestQuote.split("-");
     parts[2] = (parseInt(parts[2], 10) + 1).toString();
     const updatedQuotation = parts.join("-");
+    console.log("Upadted quotation:", updatedQuotation);
 
     try {
       const resp = await fetch(`${BASE_URL}quote/`, {
@@ -252,13 +275,91 @@ const Dashboard = () => {
     navigate("/viewer", { state: { fileName: filekey } });
   };
 
-  const filteredFiles = files.filter(
+  const localFilteredFiles = files.filter(
     (file) =>
       file.quotationname?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       file.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
+  useEffect(() => {
+    const partNo = searchQuery.trim();
+
+    if (!partNo || localFilteredFiles.length > 0) {
+      setPartSearchFiles([]);
+      setFileSearch(false);
+      return;
+    }
+
+    let cancelled = false;
+    setFileSearch(true);
+    const timer = setTimeout(async () => {
+      if (cancelled) return;
+
+      try {
+        const response = await axios.get(
+          `${BASE_URL}get_project_name/?part_no=${partNo}`,
+        );
+        const projectNames = Array.isArray(response.data?.data)
+          ? response.data.data
+              .map((item) => item?.project_name ?? item?.projectName)
+              .filter(Boolean)
+          : [
+              (response.data?.project_name ??
+              response.data?.projectName ??
+              response.data?.data?.project_name ??
+              response.data?.data?.projectName ??
+              typeof response.data === "string")
+                ? response.data
+                : "",
+            ].filter(Boolean);
+
+        if (projectNames.length === 0 || cancelled) {
+          if (!cancelled) setPartSearchFiles([]);
+          return;
+        }
+
+        setPartSearchFiles(
+          files.filter((file) =>
+            projectNames.some(
+              (projectName) =>
+                file.name?.toLowerCase() === String(projectName).toLowerCase(),
+            ),
+          ),
+        );
+      } catch (err) {
+        if (!cancelled) setPartSearchFiles([]);
+      } finally {
+        if (!cancelled) setFileSearch(false);
+      }
+    }, 400);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [searchQuery, localFilteredFiles.length]);
+
+  const filteredFiles =
+    localFilteredFiles.length > 0 ? localFilteredFiles : partSearchFiles;
+
   // ------------ SORTING ---------------
+  // const sortedFiles = [...filteredFiles].sort((a, b) => {
+  //   const aHasQuotation = !!a.quotationname;
+  //   const bHasQuotation = !!b.quotationname;
+
+  //   if (!aHasQuotation && bHasQuotation) return -1;
+  //   if (aHasQuotation && !bHasQuotation) return 1;
+
+  //   if (!aHasQuotation && !bHasQuotation) {
+  //     return new Date(a.uploaded_at) - new Date(b.uploaded_at);
+  //   }
+
+  //   const nameCompare = b.quotationname.localeCompare(a.quotationname);
+  //   if (nameCompare !== 0) return nameCompare;
+
+  //   return new Date(a.uploaded_at) - new Date(b.uploaded_at);
+  // });
+
   const sortedFiles = [...filteredFiles].sort((a, b) => {
     const aHasQuotation = !!a.quotationname;
     const bHasQuotation = !!b.quotationname;
@@ -270,8 +371,38 @@ const Dashboard = () => {
       return new Date(a.uploaded_at) - new Date(b.uploaded_at);
     }
 
-    const nameCompare = b.quotationname.localeCompare(a.quotationname);
-    if (nameCompare !== 0) return nameCompare;
+    const parseQuotation = (quotation) => {
+      const match = quotation.match(/^QUOTE-[A-Z]+-(\d+)-(\d+)-(\d+)$/);
+
+      if (!match) {
+        return {
+          quotationNo: 0,
+          year1: 0,
+          year2: 0,
+        };
+      }
+
+      return {
+        quotationNo: parseInt(match[1], 10),
+        year1: parseInt(match[2], 10),
+        year2: parseInt(match[3], 10),
+      };
+    };
+
+    const qa = parseQuotation(a.quotationname);
+    const qb = parseQuotation(b.quotationname);
+
+    if (qa.year1 !== qb.year1) {
+      return qb.year1 - qa.year1;
+    }
+
+    if (qa.year2 !== qb.year2) {
+      return qb.year2 - qa.year2;
+    }
+
+    if (qa.quotationNo !== qb.quotationNo) {
+      return qb.quotationNo - qa.quotationNo;
+    }
 
     return new Date(a.uploaded_at) - new Date(b.uploaded_at);
   });
@@ -485,6 +616,13 @@ const Dashboard = () => {
     }
   };
 
+  const toggleOpenClient = (id) => {
+    setOpenRoleStates((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+
   function debounce(fn, delay = 1000) {
     let timer;
     return (...args) => {
@@ -497,6 +635,27 @@ const Dashboard = () => {
     () => debounce(updateQuotationName, 2000),
     [],
   );
+
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        const resp = await axios.get(`${BASE_URL}get_customer/`);
+
+        if (resp.data.status === "success") {
+          const clientItems = resp.data.data.reduce((acc, client) => {
+            acc[client.customerName] = client.customerCode;
+            return acc;
+          }, {});
+
+          setClientItems(clientItems);
+        }
+      } catch (err) {
+        console.log(err);
+      }
+    };
+
+    fetchClients();
+  }, [fileUploadPopup]);
 
   useEffect(() => {
     if (formSuccess) {
@@ -554,8 +713,8 @@ const Dashboard = () => {
 
               <div>
                 <label
-                  htmlFor="fileUploader"
                   className="m-3 relative group cursor-pointer hidden md:block"
+                  onClick={() => setFileUploadPopup(true)}
                 >
                   <div className="relative bg-[#3da5c5] w-34 h-10 rounded-lg overflow-hidden flex items-center">
                     <p className="ml-4 text-white z-10  group-hover:opacity-0">
@@ -571,20 +730,11 @@ const Dashboard = () => {
                     </div>
                   </div>
                 </label>
-
-                <input
-                  id="fileUploader"
-                  type="file"
-                  ref={fileInputRef}
-                  className="hidden"
-                  onChange={handleFileChange}
-                  disabled={uploading}
-                />
               </div>
-              <div className="flex justify-centeritems-center">
+              <div className="flex justify-center items-center">
                 <label
-                  htmlFor="fileUploader"
                   className="m-3 relative group cursor-pointer md:hidden"
+                  onClick={() => setFileUploadPopup(true)}
                 >
                   <CloudUpload
                     color="#0e9dc7"
@@ -633,6 +783,9 @@ const Dashboard = () => {
                   <th className="px-2 py-4 text-[17px] font-semibold up">
                     Actions
                   </th>
+                  {/* <th className="px-2 py-4 text-[17px] font-semibold up">
+                    Client
+                  </th> */}
                 </tr>
               </thead>
             </table>
@@ -640,108 +793,121 @@ const Dashboard = () => {
             <div className="overflow-y-auto max-h-[58vh]">
               <table className="w-full table-fixed">
                 <tbody className="text-[#444] text-center">
-                  {sortedFiles.map((file) => (
-                    <tr key={file.id} className="hover:bg-gray-50 ">
-                      <td className="px-2 py-2 break-words">{file.name}</td>
-                      <td className="px-6 py-4">
-                        {new Date(file.uploaded_at).toLocaleDateString()}
+                  {fileSearch ? (
+                    <tr>
+                      <td colSpan={7}>
+                        <div className="w-full h-full flex justify-center items-center">
+                          <p className="text-lg mt-8 text-slate-600 font-semibold">
+                            Please wait, While we check...
+                          </p>
+                        </div>
                       </td>
-                      {/* <td className="px-6 py-4">{file.quotationname}</td> */}
-                      <td className="py-4">
-                        {CAN_DELETE.includes(role) ? (
-                          <input
-                            type="text"
-                            className="rounded py-1 w-full text-center text-sm md:text-[16.5px]"
-                            value={localQuote[file.name] ?? file.quotationname}
-                            onChange={(e) => {
-                              const value = e.target.value;
+                    </tr>
+                  ) : sortedFiles?.length > 0 ? (
+                    sortedFiles.map((file) => (
+                      <tr key={file.id} className="hover:bg-gray-50 ">
+                        <td className="px-2 py-2 break-words">{file.name}</td>
+                        <td className="px-6 py-4">
+                          {new Date(file.uploaded_at).toLocaleDateString()}
+                        </td>
+                        {/* <td className="px-6 py-4">{file.quotationname}</td> */}
+                        <td className="py-4">
+                          {CAN_DELETE.includes(role) ? (
+                            <input
+                              type="text"
+                              className="rounded py-1 w-full text-center text-sm md:text-[16.5px]"
+                              value={
+                                localQuote[file.name] ?? file.quotationname
+                              }
+                              onChange={(e) => {
+                                const value = e.target.value;
 
-                              setLocalQuote((prev) => ({
-                                ...prev,
-                                [file.name]: value,
-                              }));
+                                setLocalQuote((prev) => ({
+                                  ...prev,
+                                  [file.name]: value,
+                                }));
 
-                              debouncedUpdateQuotationName(file.name, value);
-                            }}
-                          />
-                        ) : (
-                          file.quotationname
-                        )}
-                      </td>
+                                debouncedUpdateQuotationName(file.name, value);
+                              }}
+                            />
+                          ) : (
+                            file.quotationname
+                          )}
+                        </td>
 
-                      <td className="px-6 py-4">
-                        {file.grandTotal
-                          ? new Date(file.last_date).toLocaleDateString()
-                          : ""}
-                      </td>
-                      <td className="px-6 py-4">
-                        {file.grandTotal
-                          ? Number(file.grandTotal).toFixed(2)
-                          : ""}
-                      </td>
+                        <td className="px-6 py-4">
+                          {file.grandTotal
+                            ? new Date(file.last_date).toLocaleDateString()
+                            : ""}
+                        </td>
+                        <td className="px-6 py-4">
+                          {file.grandTotal
+                            ? Number(file.grandTotal).toFixed(2)
+                            : ""}
+                        </td>
 
-                      <td className="px-6 py-4">
-                        <td>
-                          <StatusDropdown
-                            value={
-                              localStatus[file.name] ??
-                              file.projectStatus ??
-                              "PENDING"
-                            }
-                            options={statusOptions}
-                            onChange={(newStatus) => {
-                              const oldStatus =
+                        <td className="px-6 py-4">
+                          <td>
+                            <StatusDropdown
+                              value={
                                 localStatus[file.name] ??
                                 file.projectStatus ??
-                                "PENDING";
-
-                              setOrderStatus(newStatus);
-                              setLocalStatus((p) => ({
-                                ...p,
-                                [file.name]: newStatus,
-                              }));
-                              setPreviousStatus((p) => ({
-                                ...p,
-                                [file.name]: oldStatus,
-                              }));
-
-                              if (newStatus === "PO RECEIVED") {
-                                setPopupFilename(file.name);
-                                setPopQuote(file.quotationname);
-                                setPoptTotal(file.grandTotal);
-                                setPopupInput("");
-                                setShowPoPopup(true);
-                              } else if (newStatus === "PO PENDING") {
-                                setPopupFilename(file.name);
-                                setPopQuote(file.quotationname);
-                                setPoptTotal(file.grandTotal);
-                                setPopupInput("N/A");
-                                setPoContact("");
-                                setShowPoContact(true);
-                              } else {
-                                projectStatusUpdate(
-                                  file.name,
-                                  file.quotationname,
-                                  file.grandTotal,
-                                  newStatus,
-                                );
+                                "PENDING"
                               }
-                            }}
-                          />
-                        </td>
-                      </td>
+                              options={statusOptions}
+                              onChange={(newStatus) => {
+                                const oldStatus =
+                                  localStatus[file.name] ??
+                                  file.projectStatus ??
+                                  "PENDING";
 
-                      <td className="px-4 py-4">
-                        <div className="flex flex-row justify-center items-center gap-4">
-                          <button
-                            onClick={() => handleMakeQuotation(file.name)}
-                          >
-                            <MdOutlineRateReview
-                              className="hover:text-[#0e9dc7] "
-                              style={{ width: "25px", height: "25px" }}
+                                setOrderStatus(newStatus);
+                                setLocalStatus((p) => ({
+                                  ...p,
+                                  [file.name]: newStatus,
+                                }));
+                                setPreviousStatus((p) => ({
+                                  ...p,
+                                  [file.name]: oldStatus,
+                                }));
+
+                                if (newStatus === "PO RECEIVED") {
+                                  setPopupFilename(file.name);
+                                  setPopQuote(file.quotationname);
+                                  setPoptTotal(file.grandTotal);
+                                  setPopupInput("");
+                                  setShowPoPopup(true);
+                                } else if (newStatus === "PO PENDING") {
+                                  setPopupFilename(file.name);
+                                  setPopQuote(file.quotationname);
+                                  setPoptTotal(file.grandTotal);
+                                  setPopupInput("N/A");
+                                  setPoContact("");
+                                  setShowPoContact(true);
+                                } else {
+                                  projectStatusUpdate(
+                                    file.name,
+                                    file.quotationname,
+                                    file.grandTotal,
+                                    newStatus,
+                                  );
+                                }
+                              }}
                             />
-                          </button>
-                          <button
+                          </td>
+                        </td>
+
+                        <td className="px-4 py-4">
+                          <div className="flex flex-row justify-center items-center gap-4">
+                            <button
+                              onClick={() => handleMakeQuotation(file.name)}
+                            >
+                              <MdOutlineRateReview
+                                className="hover:text-[#0e9dc7] "
+                                style={{ width: "25px", height: "25px" }}
+                              />
+                            </button>
+                            {/* <button
                             onClick={() => {
                               setExtraInfoInput(file.ext_info);
                               setPopupFilename(file.name);
@@ -752,27 +918,30 @@ const Dashboard = () => {
                               className="hover:text-[#0e9dc7] "
                               style={{ width: "25px", height: "25px" }}
                             />
-                          </button>
-                          {CAN_DELETE.includes(role) && (
-                            <button
-                              onClick={() =>
-                                window.confirm(
-                                  "Are You sure you want to delete this assembly?",
-                                )
-                                  ? handleDelete(file.name)
-                                  : null
-                              }
-                            >
-                              <MdDelete
-                                className="hover:text-[#0e9dc7] "
-                                style={{ width: "25px", height: "25px" }}
-                              />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                          </button> */}
+                            {CAN_DELETE.includes(role) && (
+                              <button
+                                onClick={() =>
+                                  window.confirm(
+                                    "Are You sure you want to delete this assembly?",
+                                  )
+                                    ? handleDelete(file.name)
+                                    : null
+                                }
+                              >
+                                <MdDelete
+                                  className="hover:text-[#0e9dc7] "
+                                  style={{ width: "25px", height: "25px" }}
+                                />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <EmptyState title="No Files available" subtitle="" />
+                  )}
                 </tbody>
               </table>
             </div>
@@ -989,6 +1158,101 @@ const Dashboard = () => {
         </div>
       )}
 
+      {fileUploadPopup && (
+        <div className="fixed inset-0 backdrop-blur-[1px] flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-85 md:w-100">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-center">File Upload</h2>
+              <button
+                onClick={() => {
+                  setFileUploadPopup(false);
+                  setClient({ key: "", value: "" });
+                  setClientDropDown(false);
+                }}
+              >
+                <X />
+              </button>
+            </div>
+            <div className="flex justify-center">
+              <div className="flex items-center gap-4">
+                <label className="text-md font-medium whitespace-nowrap">
+                  Select Client :
+                </label>
+
+                <div className="relative w-[170px] md:w-[180px] ">
+                  <button
+                    type="button"
+                    onClick={() => setClientDropDown((prev) => !prev)}
+                    className="flex items-center justify-between w-full px-3 py-2 border border-[#0e9dc7] rounded-md bg-white"
+                  >
+                    <span className="text-md text-[#444]">
+                      {client.key || "Select Client"}
+                    </span>
+
+                    <SlArrowDown
+                      className={`text-lg text-[#0e9dc7] transition-transform ${
+                        clientDropdown ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {clientDropdown && (
+                    <div className="absolute left-0 top-full mt-1 w-full bg-white border border-[#0e9dc7] rounded-md shadow-lg z-50 overflow-y-auto h-75">
+                      {Object.entries(clientItems).map(([label, value]) => (
+                        <div
+                          key={value}
+                          className="px-4 py-2 cursor-pointer hover:bg-blue-50"
+                          onClick={() => {
+                            setClient({ key: label, value: value });
+                            setClientDropDown(false);
+                          }}
+                        >
+                          {label}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-center">
+              <div>
+                <label
+                  htmlFor="fileUploader"
+                  className="m-3 relative group cursor-pointer"
+                  onClick={() => setFileUploadPopup(true)}
+                >
+                  <div className="relative bg-[#3da5c5] w-34 h-10 rounded-lg overflow-hidden flex items-center">
+                    <p className="ml-4 text-white z-10  group-hover:opacity-0">
+                      UPLOAD
+                    </p>
+
+                    <div className="absolute top-1/2 right-1 -translate-y-1/2 w-10 h-[80%] bg-white rounded-md flex items-center justify-center transition-all duration-100 group-hover:w-[94%]">
+                      <CloudUpload
+                        color="#0e9dc7"
+                        style={{ width: 20, height: 20 }}
+                        className="transition-all"
+                      />
+                    </div>
+                  </div>
+                </label>
+
+                <input
+                  id="fileUploader"
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  onChange={(e) => {
+                    handleFileChange;
+                  }}
+                  disabled={uploading}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {formSuccess && (
         <div className="fixed top-2 right-10 z-50 w-fit rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-center text-lg text-emerald-700 shadow-lg animate-slide-in">
           {formSuccess}
@@ -997,5 +1261,12 @@ const Dashboard = () => {
     </>
   );
 };
+
+const EmptyState = ({ title, subtitle }) => (
+  <div className="flex h-full flex-col items-center justify-center rounded-2xl  bg-white p-8 text-center text-slate-500">
+    <p className="text-lg font-semibold text-slate-600">{title}</p>
+    <p className="text-sm">{subtitle}</p>
+  </div>
+);
 
 export default Dashboard;

@@ -12,6 +12,9 @@ import JobTracking from "../pages/JobTracking";
 
 import { element } from "prop-types";
 import BomTable from "../components/BomTable";
+import FileFormatter from "../pages/FileFormatter";
+import QuoteGenerationWindow from "../pages/QuoteGenerationWindow";
+import Clients from "../pages/Clients";
 const landerpageRoutes = {
   path: "/",
   name: "root",
@@ -71,20 +74,52 @@ const orderTracking = {
   route: Route,
   displaySidebar: false,
 };
+// const jobTracker = {
+//   path: "/job",
+//   name: "Job",
+//   element: <JobTracking />,
+//   route: Route,
+//   displaySidebar:false,
+//   children: [
+//     {
+//       path: "/job/bom",
+//       name: "BOM",
+//       element: <BomTable />,
+//       route: Route,
+//       displaySidebar: false,
+//     },
+//   ],
+// };
+
 const jobTracker = {
-  path: "/job",
-  name: "Job",
-  element: <JobTracking />,
+  path: "/job/bom",
+  name: "BOM",
+  element: <BomTable />,
   route: Route,
-  children: [
-    {
-      path: "/job/bom",
-      name: "BOM",
-      element: <BomTable />,
-      route: Route,
-      displaySidebar: false,
-    },
-  ],
+  displaySidebar: false,
+};
+
+// const assemblyFormatter = {
+//   path:"/formatfile",
+//   name:"File Formatter",
+//   element: <FileFormatter/>,
+//   route: Route,
+// }
+
+const clients = {
+  path:"/clients",
+  name: "Clients",
+  element: <Clients/>,
+  route: Route,
+  displaySidebar: true
+}
+
+const quoteGenerator = {
+  path: "/quote",
+  name: "Quote Generator",
+  element: <QuoteGenerationWindow />,
+  route: Route,
+  displaySidebar: false,
 };
 
 const listedRoutes = (routes) => {
@@ -110,6 +145,9 @@ const authProtectedRoutes = listedRoutes([
   reviewFiles,
   orderTracking,
   jobTracker,
+  // assemblyFormatter,
+  clients,
+  quoteGenerator
 ]);
 
 const publicRoutes = listedRoutes([landerpageRoutes]);
@@ -127,4 +165,7 @@ export {
   reviewFiles,
   orderTracking,
   jobTracker,
+  // assemblyFormatter,
+  clients,
+  quoteGenerator
 };

@@ -33,7 +33,7 @@ const AllRoutes = () => {
               path={route.path}
               element={
                 isAuthenticated ? (
-                  <Navigate to="/job" replace />
+                  <Navigate to="/order" replace />
                 ) : (
                   <Navigate to={{ pathname: "/" }} />
                 )

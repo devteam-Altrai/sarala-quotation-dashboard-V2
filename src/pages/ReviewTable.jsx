@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FileText, MoveLeft, Save, Table2 } from "lucide-react";
+import { FileText, MoveLeft, Save, Table2, X } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../utils/AppConstant";
@@ -14,10 +14,21 @@ const ReviewTable = () => {
   const { assembly } = location.state || {};
 
   const [tableData, setTableData] = useState([]);
+  const [quoteItems, setQuoteItems] = useState([
+    {
+      part_no: "",
+      description: "",
+      hsn: "",
+      qty: 0,
+      unit_price: 0,
+      total_price: 0,
+    },
+  ]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [profitPercentage, setProfitPercentage] = useState(20);
   const [quotationName, setQuotationName] = useState("");
+  const [assemblyClient, setAssemblyClient] = useState("")
   const [projectstatus, setProjectstatus] = useState("");
   const [grandTotal, setGrandTotal] = useState(0);
 
@@ -86,12 +97,14 @@ const ReviewTable = () => {
   const fetchMetaData = async () => {
     try {
       const res = await axios.get(
-        `${BASE_URL}get_metadata/?projectName=${assembly}`
+        `${BASE_URL}get_metadata/?projectName=${assembly}`,
       );
       if (res.data.status === "ok" && res.data.data.length > 0) {
         const temp = res.data.data[0];
 
+        // console.log("TEML:", temp)
         setQuotationName(temp.quotationname);
+        setAssemblyClient(temp.client)
         setProjectstatus(temp.projectStatus);
       }
     } catch (err) {
@@ -101,8 +114,11 @@ const ReviewTable = () => {
 
   const fetchData = async () => {
     try {
-      const res = await axios.get(`${BASE_URL}fetch/?project_name=${assembly}`);
-
+      const res = await axios.get(`${BASE_URL}fetch/`, {
+    params: {
+        project_name: assembly,
+    },
+});
       if (res.data.status !== "ok") {
         setError("No data found");
         return;
@@ -122,7 +138,7 @@ const ReviewTable = () => {
 
       // ✅ recalculate all rows using derived %
       const recalculatedData = sorted.map((row) =>
-        calculateRow(row, derivedProfitPercentage)
+        calculateRow(row, derivedProfitPercentage),
       );
 
       setTableData(recalculatedData);
@@ -133,6 +149,18 @@ const ReviewTable = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const items = tableData.map((item) => ({
+      part_no: item.part_no,
+      description: item.description,
+      hsn: "",
+      qty: item.quantity,
+      unit_price: item.unit,
+      total_price: item.total.toFixed(2),
+    }));
+    setQuoteItems(items);
+  }, [tableData]);
 
   useEffect(() => {
     fetchData();
@@ -158,7 +186,7 @@ const ReviewTable = () => {
   const calculateRow = (row, profitPercentage) => {
     const baseCost = numericFields.reduce(
       (acc, nf) => acc + Number(row[nf] || 0),
-      0
+      0,
     );
 
     const profit = (baseCost * profitPercentage) / 100;
@@ -187,7 +215,7 @@ const ReviewTable = () => {
     for (const row of rows) {
       const baseCost = numericFields.reduce(
         (acc, nf) => acc + Number(row[nf] || 0),
-        0
+        0,
       );
 
       if (baseCost > 0 && Number(row.profit) > 0) {
@@ -216,7 +244,7 @@ const ReviewTable = () => {
 
   const exportToExcel = () => {
     const sortedData = [...tableData].sort((a, b) =>
-      a.part_no.localeCompare(b.part_no)
+      a.part_no.localeCompare(b.part_no),
     );
 
     // ✅ Format description with line breaks for wrapping
@@ -339,7 +367,7 @@ const ReviewTable = () => {
 
   const exportToPDF = () => {
     const sortedData = [...tableData].sort((a, b) =>
-      a.part_no.localeCompare(b.part_no)
+      a.part_no.localeCompare(b.part_no),
     );
     const doc = new jsPDF({ orientation: "landscape" });
 
@@ -395,7 +423,7 @@ const ReviewTable = () => {
     doc.text(
       `GRAND TOTAL: ${grandTotal.toFixed(2)}`,
       14,
-      doc.lastAutoTable.finalY + 10
+      doc.lastAutoTable.finalY + 10,
     );
     doc.save(`${quotationName}.pdf`);
   };
@@ -414,123 +442,152 @@ const ReviewTable = () => {
     );
 
   return (
-    <div className="flex flex-col md:flex-row bg-gray-200 items-center justify-center w-full h-full">
-      <div className="relative overflow-hidden shadow-lg sm:rounded-xl h-full w-full bg-white p-3">
-        <div className="flex flex-row justify-between items-center gap-3 ml-2 mt-5">
-          <div className="flex items-center gap-6">
-            <button onClick={() => navigate(-1)}>
-              <MoveLeft className="w-7 h-7 ml-3" />
-            </button>
-            <h2 className="text-xl font-semibold text-gray-800">
-              Review Table: <span className="text-[#119cc2]">{assembly}</span>
-            </h2>
+    <>
+      <div className="flex flex-col md:flex-row bg-gray-200 items-center justify-center w-full h-full">
+        <div className="relative overflow-hidden shadow-lg sm:rounded-xl h-full w-full bg-white p-3">
+          <div className="flex flex-row justify-between items-center gap-3 ml-2 mt-5">
+            <div className="flex items-center gap-6">
+              <button onClick={() => navigate(-1)}>
+                <MoveLeft className="w-7 h-7 ml-3" />
+              </button>
+              <h2 className="text-xl font-semibold text-gray-800">
+                Review Table: <span className="text-[#119cc2]">{assembly}</span>
+              </h2>
+            </div>
           </div>
-        </div>
 
-        <div className="mt-3 mb-3 flex items-center justify-between pl-2 pr-2">
-          <div className="flex flex-row w-[50%] gap-5">
-            <label className="text-xl ml-3">PROFIT: {profitPercentage}%</label>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={profitPercentage}
-              onChange={(e) => handleProfitSlider(Number(e.target.value))}
-              className="w-[50%] "
-            />
+          <div className="mt-3 mb-3 flex items-center justify-between pl-2 pr-2">
+            <div className="flex flex-row w-[50%] gap-5">
+              <label className="text-xl ml-3">
+                PROFIT: {profitPercentage}%
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={profitPercentage}
+                onChange={(e) => handleProfitSlider(Number(e.target.value))}
+                className="w-[50%] "
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleSave}
+                className="p-2 bg-white border border-[#0e9dc7] rounded hover:bg-blue-50"
+              >
+                <Save color="#0e9dc7" />
+              </button>
+              <button
+                onClick={exportToExcel}
+                className="p-2 bg-white border border-[#0e9dc7] rounded hover:bg-blue-50"
+              >
+                <Table2 color="#0e9dc7" />
+              </button>
+              <button
+                onClick={exportToPDF}
+                className="p-2 bg-white border border-[#0e9dc7] rounded hover:bg-blue-50"
+              >
+                <FileText color="#0e9dc7" />
+              </button>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={handleSave}
-              className="p-2 bg-white border border-[#0e9dc7] rounded hover:bg-blue-50"
-            >
-              <Save color="#0e9dc7" />
-            </button>
-            <button
-              onClick={exportToExcel}
-              className="p-2 bg-white border border-[#0e9dc7] rounded hover:bg-blue-50"
-            >
-              <Table2 color="#0e9dc7" />
-            </button>
-            <button
-              onClick={exportToPDF}
-              className="p-2 bg-white border border-[#0e9dc7] rounded hover:bg-blue-50"
-            >
-              <FileText color="#0e9dc7" />
-            </button>
+
+          <div className=" overflow-auto max-h-[62vh] border border-gray-400 rounded">
+            <table className="w-full text-sm text-left border-collapse">
+              <thead className="bg-gray-100 uppercase text-xs sticky top-0 z-10">
+                <tr>
+                  {costFields.map((field) => (
+                    <th
+                      key={field}
+                      className="px-1 py-3 border text-center"
+                      style={{ width: columnWidths[field] }}
+                    >
+                      <span>{costFieldLabels[field]}</span>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+
+              <tbody>
+                {[...tableData]
+                  .sort((a, b) => a.part_no.localeCompare(b.part_no))
+                  .map((item, idx) => (
+                    <tr key={idx} className="hover:bg-gray-50">
+                      {costFields.map((field) => (
+                        <td
+                          key={field}
+                          className={`py-3 border text-center ${
+                            field === "part_no"
+                              ? "whitespace-normal break-words max-w-[200px]"
+                              : ""
+                          }`}
+                          style={{ width: columnWidths[field] }}
+                        >
+                          {field === "part_no" ? (
+                            // READ-ONLY TEXT (WRAPS)
+                            <span>{item.part_no}</span>
+                          ) : ["unit", "profit", "total"].includes(field) ? (
+                            // CALCULATED FIELDS (ALSO READ-ONLY)
+                            <span>{item[field]?.toFixed(2)}</span>
+                          ) : (
+                            // ALL OTHER FIELDS STAY EDITABLE
+                            <input
+                              type="text"
+                              value={
+                                item[field] === 0 ? "" : (item[field] ?? "")
+                              }
+                              onChange={(e) =>
+                                handleCellChange(
+                                  idx,
+                                  field,
+                                  e.target.value === ""
+                                    ? ""
+                                    : Number(e.target.value),
+                                )
+                              }
+                              className="w-full text-center border-none outline-none focus:outline-none"
+                            />
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
           </div>
-        </div>
 
-        <div className=" overflow-auto max-h-[62vh] border border-gray-400 rounded">
-          <table className="w-full text-sm text-left border-collapse">
-            <thead className="bg-gray-100 uppercase text-xs sticky top-0 z-10">
-              <tr>
-                {costFields.map((field) => (
-                  <th
-                    key={field}
-                    className="px-1 py-3 border text-center"
-                    style={{ width: columnWidths[field] }}
-                  >
-                    <span>{costFieldLabels[field]}</span>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-
-            <tbody>
-              {[...tableData]
-                .sort((a, b) => a.part_no.localeCompare(b.part_no))
-                .map((item, idx) => (
-                  <tr key={idx} className="hover:bg-gray-50">
-                    {costFields.map((field) => (
-                      <td
-                        key={field}
-                        className={`py-3 border text-center ${
-                          field === "part_no"
-                            ? "whitespace-normal break-words max-w-[200px]"
-                            : ""
-                        }`}
-                        style={{ width: columnWidths[field] }}
-                      >
-                        {field === "part_no" ? (
-                          // READ-ONLY TEXT (WRAPS)
-                          <span>{item.part_no}</span>
-                        ) : ["unit", "profit", "total"].includes(field) ? (
-                          // CALCULATED FIELDS (ALSO READ-ONLY)
-                          <span>{item[field]?.toFixed(2)}</span>
-                        ) : (
-                          // ALL OTHER FIELDS STAY EDITABLE
-                          <input
-                            type="text"
-                            value={item[field] === 0 ? "" : item[field] ?? ""}
-                            onChange={(e) =>
-                              handleCellChange(
-                                idx,
-                                field,
-                                e.target.value === ""
-                                  ? ""
-                                  : Number(e.target.value)
-                              )
-                            }
-                            className="w-full text-center border-none outline-none focus:outline-none"
-                          />
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="text-right mt-1 md:mt-3 text-xl font-bold text-[#444] mr-2">
+          {/* <div className="text-right mt-1 md:mt-3 text-xl font-bold text-[#444] mr-2">
           GRAND TOTAL:{" "}
           <span className="text-[#0e9dc7] text-xl">
             {grandTotal.toFixed(2)}
           </span>
+        </div> */}
+          <div className="flex flex-row justify-between items-center w-full  p-2">
+            <button
+              className={`py-1 px-2 bg-[#0e9dc7] rounded text-white font-semibold ${!quotationName ? "opacity-40 pointer-events-none cursor-not-allowed" : ""}`}
+              onClick={() =>
+                navigate("/quote", {
+                  state: {
+                    quote_items: quoteItems,
+                    quote_name: quotationName,
+                    assembly_Client: assemblyClient
+                  },
+                })
+              }
+              disabled={!quotationName}
+            >
+              Generate Quote
+            </button>
+            <p className="text-lg text-right font-bold text-[#444]">
+              GRAND TOTAL :{" "}
+              <span className="text-[#0e9dc7] text-lg font-bold">
+                {grandTotal.toFixed(2)}
+              </span>
+            </p>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
